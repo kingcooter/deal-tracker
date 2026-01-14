@@ -352,7 +352,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               </div>
             ) : results.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-foreground-muted">
-                No results found for "{query}"
+                No results found for &quot;{query}&quot;
               </div>
             ) : (
               <div className="space-y-1 px-2">

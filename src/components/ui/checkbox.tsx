@@ -79,7 +79,8 @@ export function CheckboxWithLabel({
   id,
   ...props
 }: CheckboxWithLabelProps) {
-  const checkboxId = id || React.useId();
+  const generatedId = React.useId();
+  const checkboxId = id || generatedId;
 
   return (
     <div className="flex items-start gap-3">

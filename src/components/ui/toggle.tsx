@@ -67,7 +67,8 @@ export function ToggleWithLabel({
   id,
   ...props
 }: ToggleWithLabelProps) {
-  const toggleId = id || React.useId();
+  const generatedId = React.useId();
+  const toggleId = id || generatedId;
 
   return (
     <div className="flex items-center justify-between gap-4">
