@@ -1,26 +1,692 @@
 @import "tailwindcss";
 
+/*
+ * DealTracker Design System
+ * Supabase-inspired dark theme with PM vocabulary
+ * Reference: claude.md Phase 1
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ===== SUPABASE NEUTRAL SCALE ===== */
+  /* Exact Supabase colors for sharp, professional look */
+  --neutral-950: #1C1C1C;   /* Primary background */
+  --neutral-900: #1C1C1C;   /* Primary background (alias) */
+  --neutral-850: #232323;   /* Slightly elevated */
+  --neutral-800: #2A2A2A;   /* Panels, cards, secondary bg */
+  --neutral-750: #2E2E2E;   /* Surface hover */
+  --neutral-700: #323232;   /* Tertiary bg, hover states */
+  --neutral-600: #3E3E3E;   /* Borders, dividers */
+  --neutral-500: #4E4E4E;   /* Hover borders */
+  --neutral-400: #6B6B6B;   /* Tertiary text, icons */
+  --neutral-300: #A1A1A1;   /* Secondary text */
+  --neutral-200: #CCCCCC;   /* Secondary text light */
+  --neutral-100: #EDEDED;   /* Primary text */
+  --neutral-50: #FFFFFF;    /* Brightest text */
+
+  /* Semantic background aliases */
+  --background: var(--neutral-950);
+  --background-secondary: var(--neutral-800);
+  --surface: var(--neutral-800);
+  --surface-hover: var(--neutral-700);
+  --surface-active: var(--neutral-600);
+  --surface-elevated: var(--neutral-800);
+
+  /* Semantic border aliases */
+  --border: var(--neutral-600);
+  --border-subtle: var(--neutral-700);
+  --border-strong: var(--neutral-500);
+
+  /* Semantic text aliases */
+  --foreground: var(--neutral-100);
+  --foreground-secondary: var(--neutral-300);
+  --foreground-muted: var(--neutral-300);
+  --foreground-subtle: var(--neutral-400);
+
+  /* ===== PRIMARY ACTION COLOR (Supabase Green) ===== */
+  --primary: #3ECF8E;
+  --primary-hover: #4AE39A;
+  --primary-muted: rgba(62, 207, 142, 0.15);
+  --primary-glow: rgba(62, 207, 142, 0.25);
+
+  /* ===== SEMANTIC COLORS ===== */
+  --destructive: #F87171;
+  --destructive-muted: rgba(248, 113, 113, 0.15);
+  --warning: #FBBF24;
+  --warning-muted: rgba(251, 191, 36, 0.15);
+  --info: #60A5FA;
+  --info-muted: rgba(96, 165, 250, 0.15);
+
+  /* ===== DEAL STATUS COLORS (PM Vocabulary) ===== */
+  /* Lead/New - Blue */
+  --status-lead: #60A5FA;
+  --status-lead-muted: rgba(96, 165, 250, 0.15);
+  /* Qualified - Purple */
+  --status-qualified: #A78BFA;
+  --status-qualified-muted: rgba(167, 139, 250, 0.15);
+  /* Under Contract - Amber */
+  --status-under-contract: #FBBF24;
+  --status-under-contract-muted: rgba(251, 191, 36, 0.15);
+  /* Due Diligence - Orange */
+  --status-due-diligence: #FB923C;
+  --status-due-diligence-muted: rgba(251, 146, 60, 0.15);
+  /* Closed Won - Green */
+  --status-closed-won: #3ECF8E;
+  --status-closed-won-muted: rgba(62, 207, 142, 0.2);
+  /* Closed Lost - Red */
+  --status-closed-lost: #F87171;
+  --status-closed-lost-muted: rgba(248, 113, 113, 0.15);
+  /* Legacy status mapping */
+  --status-active: #3ECF8E;
+  --status-active-muted: rgba(62, 207, 142, 0.15);
+  --status-closed: #64748b;
+  --status-closed-muted: rgba(100, 116, 139, 0.15);
+  --status-on-hold: #FBBF24;
+  --status-on-hold-muted: rgba(251, 191, 36, 0.15);
+
+  /* ===== TASK STATUS COLORS ===== */
+  --task-todo: var(--neutral-400);
+  --task-todo-muted: rgba(107, 107, 107, 0.15);
+  --task-in-progress: #60A5FA;
+  --task-in-progress-muted: rgba(96, 165, 250, 0.15);
+  --task-blocked: #F87171;
+  --task-blocked-muted: rgba(248, 113, 113, 0.15);
+  --task-done: #3ECF8E;
+  --task-done-muted: rgba(62, 207, 142, 0.15);
+
+  /* ===== PRIORITY COLORS ===== */
+  --priority-urgent: #F87171;
+  --priority-high: #F87171;
+  --priority-medium: #FBBF24;
+  --priority-low: #3ECF8E;
+  --priority-none: var(--neutral-400);
+
+  /* ===== ENTITY COLORS ===== */
+  /* Distinct hues for different data types */
+  --entity-deal: #60A5FA;        /* Blue - deals/properties */
+  --entity-deal-muted: rgba(96, 165, 250, 0.15);
+  --entity-contact: #A78BFA;     /* Purple - contacts/people */
+  --entity-contact-muted: rgba(167, 139, 250, 0.15);
+  --entity-workflow: #FB923C;    /* Orange - workflows */
+  --entity-workflow-muted: rgba(251, 146, 60, 0.15);
+  --entity-task: #60A5FA;        /* Blue - tasks */
+  --entity-task-muted: rgba(96, 165, 250, 0.15);
+
+  /* ===== PROPERTY TYPE COLORS ===== */
+  --property-residential: #60A5FA;   /* Blue */
+  --property-residential-muted: rgba(96, 165, 250, 0.15);
+  --property-commercial: #A78BFA;    /* Purple */
+  --property-commercial-muted: rgba(167, 139, 250, 0.15);
+  --property-office: #60A5FA;        /* Blue */
+  --property-office-muted: rgba(96, 165, 250, 0.15);
+  --property-retail: #FB923C;        /* Orange */
+  --property-retail-muted: rgba(251, 146, 60, 0.15);
+  --property-industrial: #FBBF24;    /* Amber */
+  --property-industrial-muted: rgba(251, 191, 36, 0.15);
+  --property-multifamily: #3ECF8E;   /* Green */
+  --property-multifamily-muted: rgba(62, 207, 142, 0.15);
+  --property-land: #A1A1A1;          /* Gray */
+  --property-land-muted: rgba(161, 161, 161, 0.15);
+  --property-mixed-use: #A78BFA;     /* Purple */
+  --property-mixed-use-muted: rgba(167, 139, 250, 0.15);
+
+  /* ===== SEMANTIC STATUS COLORS ===== */
+  --success: #3ECF8E;
+  --success-muted: rgba(62, 207, 142, 0.15);
+  --error: #F87171;
+  --error-muted: rgba(248, 113, 113, 0.15);
+
+  /* ===== WORKFLOW TYPE COLORS ===== */
+  --workflow-finance: #60A5FA;       /* Blue */
+  --workflow-finance-muted: rgba(96, 165, 250, 0.15);
+  --workflow-legal: #A78BFA;         /* Purple */
+  --workflow-legal-muted: rgba(167, 139, 250, 0.15);
+  --workflow-due-diligence: #FB923C; /* Orange */
+  --workflow-due-diligence-muted: rgba(251, 146, 60, 0.15);
+  --workflow-construction: #FBBF24;  /* Amber */
+  --workflow-construction-muted: rgba(251, 191, 36, 0.15);
+  --workflow-zoning: #F87171;        /* Red */
+  --workflow-zoning-muted: rgba(248, 113, 113, 0.15);
+  --workflow-regulatory: #3ECF8E;    /* Green */
+  --workflow-regulatory-muted: rgba(62, 207, 142, 0.15);
+
+  /* ===== SHADOWS ===== */
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow-sm: 0 2px 4px rgb(0 0 0 / 0.4), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow: 0 4px 12px rgb(0 0 0 / 0.4), 0 2px 4px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.5), 0 4px 8px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 16px 48px rgb(0 0 0 / 0.6), 0 8px 16px rgb(0 0 0 / 0.4);
+  --shadow-glow: 0 0 20px var(--primary-glow);
+  --shadow-glow-sm: 0 0 10px var(--primary-glow);
+
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== RADIUS ===== */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* ===== TYPOGRAPHY (Supabase Specs) ===== */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-tiny: 11px;
+  --font-size-small: 13px;
+  --font-size-body: 14px;
+  --font-size-subhead: 16px;
+  --font-size-title: 20px;
+  --font-size-heading: 24px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --letter-spacing-heading: -0.01em;
+  --letter-spacing-body: 0;
+  --line-height-body: 1.5;
+  --line-height-heading: 1.3;
+
+  /* ===== ICON SIZES ===== */
+  --icon-xs: 12px;
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 18px;
+  --icon-xl: 20px;
+  --icon-2xl: 24px;
+
+  /* ===== SPACING SCALE ===== */
+  --space-px: 1px;
+  --space-0: 0;
+  --space-0-5: 0.125rem;  /* 2px */
+  --space-1: 0.25rem;     /* 4px */
+  --space-1-5: 0.375rem;  /* 6px */
+  --space-2: 0.5rem;      /* 8px */
+  --space-2-5: 0.625rem;  /* 10px */
+  --space-3: 0.75rem;     /* 12px */
+  --space-4: 1rem;        /* 16px */
+  --space-5: 1.25rem;     /* 20px */
+  --space-6: 1.5rem;      /* 24px */
+  --space-8: 2rem;        /* 32px */
+  --space-10: 2.5rem;     /* 40px */
+  --space-12: 3rem;       /* 48px */
+
+  /* ===== SIDEBAR ===== */
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 64px;
 }
 
+/* ===== TAILWIND THEME MAPPING ===== */
 @theme inline {
+  /* Neutrals */
+  --color-neutral-950: var(--neutral-950);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-850: var(--neutral-850);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-750: var(--neutral-750);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-50: var(--neutral-50);
+
+  /* Semantic backgrounds */
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-surface-elevated: var(--surface-elevated);
+
+  /* Semantic borders */
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  /* Semantic text */
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+
+  /* Primary */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-glow: var(--primary-glow);
+
+  /* Entity colors */
+  --color-entity-deal: var(--entity-deal);
+  --color-entity-deal-muted: var(--entity-deal-muted);
+  --color-entity-contact: var(--entity-contact);
+  --color-entity-contact-muted: var(--entity-contact-muted);
+  --color-entity-workflow: var(--entity-workflow);
+  --color-entity-workflow-muted: var(--entity-workflow-muted);
+  --color-entity-task: var(--entity-task);
+  --color-entity-task-muted: var(--entity-task-muted);
+
+  /* Property types */
+  --color-property-office: var(--property-office);
+  --color-property-office-muted: var(--property-office-muted);
+  --color-property-retail: var(--property-retail);
+  --color-property-retail-muted: var(--property-retail-muted);
+  --color-property-industrial: var(--property-industrial);
+  --color-property-industrial-muted: var(--property-industrial-muted);
+  --color-property-multifamily: var(--property-multifamily);
+  --color-property-multifamily-muted: var(--property-multifamily-muted);
+  --color-property-land: var(--property-land);
+  --color-property-land-muted: var(--property-land-muted);
+  --color-property-mixed-use: var(--property-mixed-use);
+  --color-property-mixed-use-muted: var(--property-mixed-use-muted);
+
+  /* Deal status colors (PM vocabulary) */
+  --color-status-lead: var(--status-lead);
+  --color-status-lead-muted: var(--status-lead-muted);
+  --color-status-qualified: var(--status-qualified);
+  --color-status-qualified-muted: var(--status-qualified-muted);
+  --color-status-under-contract: var(--status-under-contract);
+  --color-status-under-contract-muted: var(--status-under-contract-muted);
+  --color-status-due-diligence: var(--status-due-diligence);
+  --color-status-due-diligence-muted: var(--status-due-diligence-muted);
+  --color-status-closed-won: var(--status-closed-won);
+  --color-status-closed-won-muted: var(--status-closed-won-muted);
+  --color-status-closed-lost: var(--status-closed-lost);
+  --color-status-closed-lost-muted: var(--status-closed-lost-muted);
+  /* Legacy status */
+  --color-status-active: var(--status-active);
+  --color-status-active-muted: var(--status-active-muted);
+  --color-status-closed: var(--status-closed);
+  --color-status-closed-muted: var(--status-closed-muted);
+  --color-status-on-hold: var(--status-on-hold);
+  --color-status-on-hold-muted: var(--status-on-hold-muted);
+
+  /* Task status colors */
+  --color-task-todo: var(--task-todo);
+  --color-task-todo-muted: var(--task-todo-muted);
+  --color-task-in-progress: var(--task-in-progress);
+  --color-task-in-progress-muted: var(--task-in-progress-muted);
+  --color-task-blocked: var(--task-blocked);
+  --color-task-blocked-muted: var(--task-blocked-muted);
+  --color-task-done: var(--task-done);
+  --color-task-done-muted: var(--task-done-muted);
+
+  /* Priority colors */
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+  --color-priority-none: var(--priority-none);
+
+  /* Semantic status */
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-error: var(--error);
+  --color-error-muted: var(--error-muted);
+  --color-info: var(--info);
+  --color-info-muted: var(--info-muted);
+  --color-destructive: var(--destructive);
+  --color-destructive-muted: var(--destructive-muted);
+
+  /* Workflow types */
+  --color-workflow-finance: var(--workflow-finance);
+  --color-workflow-finance-muted: var(--workflow-finance-muted);
+  --color-workflow-legal: var(--workflow-legal);
+  --color-workflow-legal-muted: var(--workflow-legal-muted);
+  --color-workflow-due-diligence: var(--workflow-due-diligence);
+  --color-workflow-due-diligence-muted: var(--workflow-due-diligence-muted);
+  --color-workflow-construction: var(--workflow-construction);
+  --color-workflow-construction-muted: var(--workflow-construction-muted);
+  --color-workflow-zoning: var(--workflow-zoning);
+  --color-workflow-zoning-muted: var(--workflow-zoning-muted);
+  --color-workflow-regulatory: var(--workflow-regulatory);
+  --color-workflow-regulatory-muted: var(--workflow-regulatory-muted);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ===== BASE STYLES ===== */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neutral-700);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-600);
+}
+
+/* ===== FOCUS STATES ===== */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background: var(--primary-muted);
+  color: var(--foreground);
+}
+
+/* ===== TABLE ===== */
+table {
+  border-collapse: collapse;
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* ===== ANIMATIONS ===== */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--neutral-800) 0%,
+    var(--neutral-750) 50%,
+    var(--neutral-800) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 200ms ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 150ms ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 200ms ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 200ms ease-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--primary-glow); }
+  50% { box-shadow: 0 0 12px 2px var(--primary-glow); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/* Card gradient overlay */
+.card-gradient {
+  position: relative;
+}
+
+.card-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Glow effect on hover */
+.hover-glow:hover {
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* Interactive card hover */
+.card-interactive {
+  transition: all var(--transition-base);
+}
+
+.card-interactive:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status indicator dot */
+.status-dot {
+  position: relative;
+}
+
+.status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* ===== TEXT UTILITIES ===== */
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== FLEX UTILITIES ===== */
+
+/* Prevent flex item from shrinking */
+.flex-none {
+  flex: none;
+}
+
+/* Allow flex item to shrink with proper text handling */
+.flex-truncate {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== BACKDROP BLUR ===== */
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+}
+
+.backdrop-blur-lg {
+  backdrop-filter: blur(16px);
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.focus-visible:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: var(--background);
+  font-weight: 500;
+  z-index: 9999;
+  transition: top 150ms ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ===== REDUCED MOTION ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+    background: var(--neutral-750);
+  }
 }

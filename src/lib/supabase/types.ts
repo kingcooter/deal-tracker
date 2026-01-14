@@ -1,0 +1,230 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      deals: {
+        Row: {
+          id: string;
+          name: string;
+          status: "active" | "closed" | "on-hold";
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          property_type: string | null;
+          image_url: string | null;
+          notes: string | null;
+          sf: number | null;
+          lot_size: number | null;
+          year_built: number | null;
+          zoning: string | null;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          status?: "active" | "closed" | "on-hold";
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          property_type?: string | null;
+          image_url?: string | null;
+          notes?: string | null;
+          sf?: number | null;
+          lot_size?: number | null;
+          year_built?: number | null;
+          zoning?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          status?: "active" | "closed" | "on-hold";
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          property_type?: string | null;
+          image_url?: string | null;
+          notes?: string | null;
+          sf?: number | null;
+          lot_size?: number | null;
+          year_built?: number | null;
+          zoning?: string | null;
+          updated_at?: string;
+        };
+      };
+      workflow_templates: {
+        Row: {
+          id: string;
+          name: string;
+          icon: string | null;
+          color: string | null;
+          is_default: boolean;
+          sort_order: number;
+          user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          icon?: string | null;
+          color?: string | null;
+          is_default?: boolean;
+          sort_order?: number;
+          user_id?: string | null;
+        };
+        Update: {
+          name?: string;
+          icon?: string | null;
+          color?: string | null;
+          is_default?: boolean;
+          sort_order?: number;
+        };
+      };
+      deal_workflows: {
+        Row: {
+          id: string;
+          deal_id: string;
+          template_id: string;
+          name: string | null;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          deal_id: string;
+          template_id: string;
+          name?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          name?: string | null;
+          sort_order?: number;
+        };
+      };
+      tasks: {
+        Row: {
+          id: string;
+          workflow_id: string;
+          task: string;
+          status: "not_started" | "in_progress" | "blocked" | "completed";
+          priority: "low" | "medium" | "high" | "urgent";
+          assignee_id: string | null;
+          owner_id: string | null;
+          opened_at: string;
+          due_date: string | null;
+          completed_at: string | null;
+          notes: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workflow_id: string;
+          task: string;
+          status?: "not_started" | "in_progress" | "blocked" | "completed";
+          priority?: "low" | "medium" | "high" | "urgent";
+          assignee_id?: string | null;
+          owner_id?: string | null;
+          opened_at?: string;
+          due_date?: string | null;
+          completed_at?: string | null;
+          notes?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          task?: string;
+          status?: "not_started" | "in_progress" | "blocked" | "completed";
+          priority?: "low" | "medium" | "high" | "urgent";
+          assignee_id?: string | null;
+          owner_id?: string | null;
+          due_date?: string | null;
+          completed_at?: string | null;
+          notes?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+        };
+      };
+      contacts: {
+        Row: {
+          id: string;
+          name: string;
+          email: string | null;
+          phone: string | null;
+          company: string | null;
+          role: string | null;
+          notes: string | null;
+          created_at: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email?: string | null;
+          phone?: string | null;
+          company?: string | null;
+          role?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          user_id: string;
+        };
+        Update: {
+          name?: string;
+          email?: string | null;
+          phone?: string | null;
+          company?: string | null;
+          role?: string | null;
+          notes?: string | null;
+        };
+      };
+      deal_contacts: {
+        Row: {
+          deal_id: string;
+          contact_id: string;
+          relationship: string | null;
+        };
+        Insert: {
+          deal_id: string;
+          contact_id: string;
+          relationship?: string | null;
+        };
+        Update: {
+          relationship?: string | null;
+        };
+      };
+    };
+  };
+}
+
+// Helper types
+export type Deal = Database["public"]["Tables"]["deals"]["Row"];
+export type DealInsert = Database["public"]["Tables"]["deals"]["Insert"];
+export type DealUpdate = Database["public"]["Tables"]["deals"]["Update"];
+
+export type WorkflowTemplate = Database["public"]["Tables"]["workflow_templates"]["Row"];
+export type DealWorkflow = Database["public"]["Tables"]["deal_workflows"]["Row"];
+export type DealWorkflowInsert = Database["public"]["Tables"]["deal_workflows"]["Insert"];
+
+export type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
+export type TaskUpdate = Database["public"]["Tables"]["tasks"]["Update"];
+
+export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
+export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
