@@ -2,176 +2,197 @@
 
 import * as React from "react";
 import { Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { getDeals, updateDeal } from "@/lib/supabase/queries";
 import { useToastActions } from "@/components/ui/toast";
-import { getDeals } from "@/lib/supabase/queries";
-import { DealDetailPanel } from "@/components/table-editor/deal-detail-panel";
 import { NewDealPanel } from "@/components/table-editor/new-deal-panel";
+import { DealKanban } from "@/components/deal-pipeline/deal-kanban";
 import type { Deal } from "@/lib/supabase/types";
-import { useQuery } from "@tanstack/react-query";
-import { useCreateDeal, useUpdateDeal } from "@/lib/hooks/use-deals";
-import { DataGrid } from "@/components/ui/data-grid/data-grid";
-import { TextCell, SelectCell } from "@/components/ui/data-grid/cells";
-import { useGridState } from "@/components/ui/data-grid/use-grid-state";
-import type { ColumnDef, SortingState, ColumnFiltersState } from "@tanstack/react-table";
-import { Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { DealCardGrid, DealFilters } from "@/components/deals";
+import { useQueryState } from "nuqs";
+import { Plus, LayoutGrid, Kanban } from "lucide-react";
+import { Skeleton, SkeletonDealGrid } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type ViewMode = "grid" | "kanban";
 
 // Loading fallback
 function DealsPageSkeleton() {
   return (
-    <div className="h-full flex flex-col bg-[#1C1C1C]">
-      <div className="h-12 border-b border-[#1C1C1C] flex items-center px-4 justify-between">
-        <h1 className="text-sm font-semibold">Deals</h1>
+    <div className="flex flex-col h-full">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-16" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <Skeleton className="h-9 w-28 rounded-md" />
       </div>
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-[#666]" />
+
+      {/* Filters skeleton */}
+      <div className="px-6 py-4 border-b border-border bg-surface">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-32 rounded-md" />
+            <Skeleton className="h-8 w-32 rounded-md" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <Skeleton className="h-8 w-36 rounded-md" />
+        </div>
+      </div>
+
+      {/* Grid skeleton */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <SkeletonDealGrid count={8} />
       </div>
     </div>
   );
 }
 
-// Status options for inline select
-const statusOptions = [
-  { value: "active", label: "Under Contract", bg: "rgba(251, 191, 36, 0.15)", text: "#FBBF24" },
-  { value: "closed", label: "Closed Won", bg: "rgba(62, 207, 142, 0.2)", text: "#3ECF8E" },
-  { value: "on-hold", label: "On Hold", bg: "rgba(248, 113, 113, 0.15)", text: "#F87171" },
-];
-
-// Property type options for inline select
-const propertyTypeOptions = [
-  { value: "office", label: "Office", bg: "rgba(96, 165, 250, 0.15)", text: "#60A5FA" },
-  { value: "retail", label: "Retail", bg: "rgba(236, 72, 153, 0.15)", text: "#EC4899" },
-  { value: "industrial", label: "Industrial", bg: "rgba(251, 191, 36, 0.15)", text: "#FBBF24" },
-  { value: "multifamily", label: "Multifamily", bg: "rgba(62, 207, 142, 0.15)", text: "#3ECF8E" },
-  { value: "land", label: "Land", bg: "rgba(120, 113, 108, 0.15)", text: "#78716C" },
-  { value: "mixed-use", label: "Mixed Use", bg: "rgba(139, 92, 246, 0.15)", text: "#8B5CF6" },
-];
-
 function DealsPageContent() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const toast = useToastActions();
 
-  // URL State Management
-  const {
-    sorting,
-    setSorting,
-    columnFilters,
-    setColumnFilters
-  } = useGridState();
+  // URL State for filters and view mode
+  const [statusFilter, setStatusFilter] = useQueryState("status", { defaultValue: "" });
+  const [propertyTypeFilter, setPropertyTypeFilter] = useQueryState("type", { defaultValue: "" });
+  const [viewMode, setViewMode] = useQueryState<ViewMode>("view", {
+    defaultValue: "grid",
+    parse: (value) => (value === "kanban" ? "kanban" : "grid"),
+  });
 
   // React Query Fetching
-  const { data: deals = [], isLoading: loading } = useQuery({
+  const { data: deals = [], isLoading } = useQuery({
     queryKey: ["deals"],
     queryFn: async () => getDeals(),
     staleTime: 60 * 1000,
   });
 
-  // Optimistic Mutations
-  const createMutation = useCreateDeal();
-  const updateMutation = useUpdateDeal();
-
   const [showNewDealPanel, setShowNewDealPanel] = React.useState(false);
-  const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null);
 
-  // Handle deal created
-  const handleDealCreated = (newDeal: Deal) => {
-    createMutation.mutate(newDeal, {
-      onSuccess: () => {
-        toast.success("Deal created");
-        setShowNewDealPanel(false);
-      },
-      onError: () => toast.error("Failed to create")
+  // Filter deals based on active filters
+  const filteredDeals = React.useMemo(() => {
+    return deals.filter((deal) => {
+      if (statusFilter && deal.status !== statusFilter) return false;
+      if (propertyTypeFilter && deal.property_type !== propertyTypeFilter) return false;
+      return true;
     });
+  }, [deals, statusFilter, propertyTypeFilter]);
+
+  // Handle deal created - just invalidate queries since NewDealPanel uses server action
+  const handleDealCreated = () => {
+    // Invalidate queries to refetch deals and tasks (auto-created by server action)
+    queryClient.invalidateQueries({ queryKey: ["deals"] });
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["sidebar-counts"] });
+    setShowNewDealPanel(false);
   };
 
-  // Handle deal update
-  const handleDealUpdate = (updatedDeal: Deal) => {
-    updateMutation.mutate({ id: updatedDeal.id, updates: updatedDeal });
-    setSelectedDeal(updatedDeal);
+  // Handle deal click - navigate to deal detail page
+  const handleDealClick = (deal: Deal) => {
+    router.push(`/deals/${deal.id}`);
   };
 
-  // Column definitions for DataGrid
-  const gridColumns = React.useMemo<ColumnDef<Deal>[]>(() => [
-    {
-      accessorKey: "name",
-      header: "Name",
-      size: 300,
-      cell: ({ getValue }) => <TextCell value={getValue()} />,
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      size: 150,
-      cell: ({ getValue }) => <SelectCell value={getValue()} options={statusOptions} />,
-    },
-    {
-      accessorKey: "property_type",
-      header: "Type",
-      size: 150,
-      cell: ({ getValue }) => <SelectCell value={getValue()} options={propertyTypeOptions} />,
-    },
-    {
-      accessorKey: "city",
-      header: "Location",
-      size: 200,
-      accessorFn: (row) => [row.city, row.state].filter(Boolean).join(", "),
-      cell: ({ getValue }) => <TextCell value={getValue()} />,
-    },
-    {
-      accessorKey: "created_at",
-      header: "Created",
-      size: 150,
-      cell: ({ getValue }) => (
-        <span className="text-[13px] text-[#A1A1A1]">
-          {getValue()
-            ? new Date(getValue() as string).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })
-            : "—"}
-        </span>
-      ),
-    },
-  ], []);
+  // Handle quick status change from hover actions
+  const handleStatusChange = async (dealId: string, newStatus: "active" | "closed" | "on-hold") => {
+    try {
+      await updateDeal(dealId, { status: newStatus });
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+      const statusLabels = { active: "Active", closed: "Closed Won", "on-hold": "On Hold" };
+      toast.success("Status updated", `Deal marked as ${statusLabels[newStatus]}`);
+    } catch (error) {
+      console.error("Error updating deal status:", error);
+      toast.error("Update failed", "Could not change deal status");
+    }
+  };
 
-  if (loading) {
-    return <div className="p-10 text-[#6B6B6B]">Loading...</div>;
-  }
+  // Handle edit from hover actions - navigate to deal settings
+  const handleEdit = (dealId: string) => {
+    router.push(`/deals/${dealId}/settings`);
+  };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-[#0A0A0A] text-[#EDEDED]">
-      <div className="h-12 border-b border-[#1C1C1C] flex items-center px-4 justify-between">
-        <h1 className="text-sm font-semibold">Deals</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[#666]">
-            {deals.length} records • {loading ? "Syncing..." : "Synced"}
-          </span>
-          <button onClick={() => setShowNewDealPanel(true)} className="bg-white text-black px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-200">
-            New Deal
-          </button>
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">Deals</h1>
+          <p className="text-sm text-foreground-muted">
+            Manage your real estate pipeline
+          </p>
+        </div>
+        <Button onClick={() => setShowNewDealPanel(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Deal
+        </Button>
+      </div>
+
+      {/* Filters & View Toggle */}
+      <div className="px-6 py-4 border-b border-border bg-surface">
+        <div className="flex items-center justify-between">
+          <DealFilters
+            statusFilter={statusFilter}
+            propertyTypeFilter={propertyTypeFilter}
+            onStatusChange={setStatusFilter}
+            onPropertyTypeChange={setPropertyTypeFilter}
+            totalCount={deals.length}
+            filteredCount={filteredDeals.length}
+          />
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 bg-[#2A2A2A] rounded-md p-0.5">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] rounded transition-colors",
+                viewMode === "grid"
+                  ? "bg-[#3E3E3E] text-[#EDEDED]"
+                  : "text-[#6B6B6B] hover:text-[#A1A1A1]"
+              )}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Grid
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] rounded transition-colors",
+                viewMode === "kanban"
+                  ? "bg-[#3E3E3E] text-[#EDEDED]"
+                  : "text-[#6B6B6B] hover:text-[#A1A1A1]"
+              )}
+            >
+              <Kanban className="h-3.5 w-3.5" />
+              Pipeline
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden relative">
-        <DataGrid
-          data={deals}
-          columns={gridColumns}
-          onRowClick={(deal) => setSelectedDeal(deal)}
-          sorting={sorting as SortingState}
-          onSortingChange={setSorting as unknown as React.Dispatch<React.SetStateAction<SortingState>>}
-          columnFilters={columnFilters as ColumnFiltersState}
-          onColumnFiltersChange={setColumnFilters as unknown as React.Dispatch<React.SetStateAction<ColumnFiltersState>>}
-        />
+      {/* Content - Grid or Kanban */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {viewMode === "kanban" ? (
+          <DealKanban onNewDeal={() => setShowNewDealPanel(true)} />
+        ) : (
+          <DealCardGrid
+            deals={filteredDeals}
+            onDealClick={handleDealClick}
+            onStatusChange={handleStatusChange}
+            onEdit={handleEdit}
+            isLoading={isLoading}
+            onNewDeal={() => setShowNewDealPanel(true)}
+          />
+        )}
       </div>
 
+      {/* New Deal Panel */}
       <NewDealPanel
         open={showNewDealPanel}
         onClose={() => setShowNewDealPanel(false)}
         onDealCreated={handleDealCreated}
-      />
-      <DealDetailPanel
-        deal={selectedDeal}
-        open={selectedDeal !== null}
-        onClose={() => setSelectedDeal(null)}
-        onDealUpdate={handleDealUpdate}
       />
     </div>
   );

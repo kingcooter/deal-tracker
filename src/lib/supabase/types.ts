@@ -208,6 +208,80 @@ export interface Database {
           relationship?: string | null;
         };
       };
+      task_templates: {
+        Row: {
+          id: string;
+          workflow_template_id: string;
+          task: string;
+          default_priority: "low" | "medium" | "high" | "urgent";
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          workflow_template_id: string;
+          task: string;
+          default_priority?: "low" | "medium" | "high" | "urgent";
+          sort_order?: number;
+        };
+        Update: {
+          task?: string;
+          default_priority?: "low" | "medium" | "high" | "urgent";
+          sort_order?: number;
+        };
+      };
+      deal_notes: {
+        Row: {
+          id: string;
+          deal_id: string;
+          content: string;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          deal_id: string;
+          content: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          content?: string;
+          updated_at?: string;
+        };
+      };
+      deal_documents: {
+        Row: {
+          id: string;
+          deal_id: string;
+          file_name: string;
+          file_url: string;
+          file_size: number | null;
+          file_type: string | null;
+          category: "contract" | "inspection" | "appraisal" | "title" | "environmental" | "survey" | "lease" | "financial" | "photo" | "legal" | "permit" | "other";
+          description: string | null;
+          uploaded_at: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          deal_id: string;
+          file_name: string;
+          file_url: string;
+          file_size?: number | null;
+          file_type?: string | null;
+          category?: "contract" | "inspection" | "appraisal" | "title" | "environmental" | "survey" | "lease" | "financial" | "photo" | "legal" | "permit" | "other";
+          description?: string | null;
+          uploaded_at?: string;
+          user_id: string;
+        };
+        Update: {
+          file_name?: string;
+          category?: "contract" | "inspection" | "appraisal" | "title" | "environmental" | "survey" | "lease" | "financial" | "photo" | "legal" | "permit" | "other";
+          description?: string | null;
+        };
+      };
     };
   };
 }
@@ -228,3 +302,14 @@ export type TaskUpdate = Database["public"]["Tables"]["tasks"]["Update"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
 export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
+
+export type TaskTemplate = Database["public"]["Tables"]["task_templates"]["Row"];
+
+export type DealDocument = Database["public"]["Tables"]["deal_documents"]["Row"];
+export type DealDocumentInsert = Database["public"]["Tables"]["deal_documents"]["Insert"];
+export type DealDocumentUpdate = Database["public"]["Tables"]["deal_documents"]["Update"];
+export type DocumentCategory = DealDocument["category"];
+
+export type DealNote = Database["public"]["Tables"]["deal_notes"]["Row"];
+export type DealNoteInsert = Database["public"]["Tables"]["deal_notes"]["Insert"];
+export type DealNoteUpdate = Database["public"]["Tables"]["deal_notes"]["Update"];

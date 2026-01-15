@@ -4,796 +4,465 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Building2,
   MapPin,
-  Edit2,
-  Plus,
-  ChevronDown,
-  ChevronRight,
-  Trash2,
+  Calendar,
+  Ruler,
   CheckCircle2,
   Circle,
   AlertCircle,
+  ArrowRight,
+  FolderKanban,
+  Users,
+  FileText,
+  Settings,
+  Pencil,
+  Check,
+  X,
+  ChevronDown,
 } from "lucide-react";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
-import { SkeletonDealDetail } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DealNotes } from "@/components/deals";
+import { getDeal, getDealWorkflows, getTasksForWorkflow, updateDeal } from "@/lib/supabase/queries";
 import { useToastActions } from "@/components/ui/toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogBody,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { TasksTable, type Task } from "@/components/tasks/tasks-table";
-import {
-  getDeal,
-  updateDeal,
-  getDealWorkflows,
-  getWorkflowTemplates,
-  createDealWorkflow,
-  deleteDealWorkflow,
-  getTasksForWorkflow,
-  createTask,
-  updateTask,
-  deleteTask,
-} from "@/lib/supabase/queries";
-import type { Deal, WorkflowTemplate } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
+import type { Deal } from "@/lib/supabase/types";
 
-const propertyTypes = [
-  { value: "office", label: "Office" },
-  { value: "retail", label: "Retail" },
-  { value: "industrial", label: "Industrial" },
-  { value: "multifamily", label: "Multifamily" },
-  { value: "land", label: "Land" },
-  { value: "mixed-use", label: "Mixed Use" },
-];
-
-const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "on-hold", label: "On Hold" },
-  { value: "closed", label: "Closed" },
-];
-
-interface WorkflowWithTasks {
-  id: string;
-  name: string;
-  color: string;
-  template_id: string;
-  tasks: Task[];
-}
-
-const statusColors: Record<string, { badge: "success" | "warning" | "secondary"; label: string }> = {
-  active: { badge: "success", label: "Active" },
-  "on-hold": { badge: "warning", label: "On Hold" },
-  closed: { badge: "secondary", label: "Closed" },
+const propertyTypeLabels: Record<string, string> = {
+  office: "Office",
+  retail: "Retail",
+  industrial: "Industrial",
+  multifamily: "Multifamily",
+  land: "Land",
+  "mixed-use": "Mixed Use",
 };
 
-export default function DealDetailPage() {
+const statusConfig: Record<string, { badge: "success" | "warning" | "secondary"; label: string }> = {
+  active: { badge: "success", label: "Under Contract" },
+  "on-hold": { badge: "warning", label: "On Hold" },
+  closed: { badge: "secondary", label: "Closed Won" },
+};
+
+export default function DealOverviewPage() {
   const params = useParams();
   const dealId = params.id as string;
+  const queryClient = useQueryClient();
   const toast = useToastActions();
 
-  const [deal, setDeal] = React.useState<Deal | null>(null);
-  const [workflows, setWorkflows] = React.useState<WorkflowWithTasks[]>([]);
-  const [templates, setTemplates] = React.useState<WorkflowTemplate[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [expandedWorkflows, setExpandedWorkflows] = React.useState<Set<string>>(new Set());
-  const [showAddWorkflow, setShowAddWorkflow] = React.useState(false);
-  const [showEditDeal, setShowEditDeal] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
-  const [editForm, setEditForm] = React.useState({
-    name: "",
-    status: "active" as "active" | "on-hold" | "closed",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    property_type: "office",
-    notes: "",
+  // Inline editing state
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [editedName, setEditedName] = React.useState("");
+  const [showStatusDropdown, setShowStatusDropdown] = React.useState(false);
+  const statusDropdownRef = React.useRef<HTMLDivElement>(null);
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Fetch deal data
+  const { data: deal } = useQuery<Deal>({
+    queryKey: ["deal", dealId],
+    queryFn: () => getDeal(dealId),
+    staleTime: 60 * 1000,
   });
 
-  // Fetch deal and workflows
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: (updates: Partial<Deal>) => updateDeal(dealId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deal", dealId] });
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+    },
+    onError: () => {
+      toast.error("Update failed", "Could not save changes");
+    },
+  });
+
+  // Handle name save
+  const handleNameSave = () => {
+    if (!editedName.trim()) {
+      setIsEditingName(false);
+      return;
+    }
+    updateMutation.mutate({ name: editedName.trim() });
+    toast.success("Updated", "Deal name saved");
+    setIsEditingName(false);
+  };
+
+  // Handle status change
+  const handleStatusChange = (newStatus: "active" | "closed" | "on-hold") => {
+    updateMutation.mutate({ status: newStatus });
+    const labels = { active: "Active", closed: "Closed Won", "on-hold": "On Hold" };
+    toast.success("Status updated", `Deal marked as ${labels[newStatus]}`);
+    setShowStatusDropdown(false);
+  };
+
+  // Focus name input when editing starts
   React.useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch deal
-        const dealData = await getDeal(dealId);
-        setDeal(dealData);
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
 
-        // Fetch workflow templates
-        const templatesData = await getWorkflowTemplates();
-        setTemplates(templatesData);
-
-        // Fetch workflows for this deal
-        const workflowsData = await getDealWorkflows(dealId);
-
-        // Fetch tasks for each workflow
-        const workflowsWithTasks: WorkflowWithTasks[] = await Promise.all(
-          workflowsData.map(async (wf) => {
-            const tasksData = await getTasksForWorkflow(wf.id);
-            const template = wf.template as WorkflowTemplate;
-
-            return {
-              id: wf.id,
-              name: wf.name || template?.name || "Workflow",
-              color: template?.color || "#6b7280",
-              template_id: wf.template_id,
-              tasks: tasksData.map((t) => ({
-                id: t.id,
-                task: t.task,
-                status: t.status as Task["status"],
-                priority: t.priority as Task["priority"],
-                owner: t.owner?.name || null,
-                assignee: t.assignee?.name || null,
-                opened_at: t.opened_at,
-                due_date: t.due_date,
-              })),
-            };
-          })
-        );
-
-        setWorkflows(workflowsWithTasks);
-        // Expand all workflows by default
-        setExpandedWorkflows(new Set(workflowsWithTasks.map((w) => w.id)));
-      } catch (error) {
-        console.error("Error fetching deal:", error);
-      } finally {
-        setLoading(false);
+  // Close status dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setShowStatusDropdown(false);
       }
-    }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    fetchData();
-  }, [dealId]);
+  // Fetch task summary for progress
+  const { data: taskSummary } = useQuery({
+    queryKey: ["deal-task-summary", dealId],
+    queryFn: async () => {
+      const workflows = await getDealWorkflows(dealId);
+      let completed = 0;
+      let inProgress = 0;
+      let blocked = 0;
+      let notStarted = 0;
 
-  const toggleWorkflow = (id: string) => {
-    setExpandedWorkflows((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+      for (const workflow of workflows) {
+        const tasks = await getTasksForWorkflow(workflow.id);
+        for (const task of tasks) {
+          if (task.status === "completed") completed++;
+          else if (task.status === "in_progress") inProgress++;
+          else if (task.status === "blocked") blocked++;
+          else notStarted++;
+        }
       }
-      return next;
-    });
-  };
 
-  const openEditDialog = () => {
-    if (!deal) return;
-    setEditForm({
-      name: deal.name,
-      status: deal.status,
-      address: deal.address || "",
-      city: deal.city || "",
-      state: deal.state || "",
-      zip: deal.zip || "",
-      property_type: deal.property_type || "office",
-      notes: deal.notes || "",
-    });
-    setShowEditDeal(true);
-  };
-
-  const handleUpdateDeal = async () => {
-    if (!deal || !editForm.name) return;
-
-    setSaving(true);
-    try {
-      const updated = await updateDeal(deal.id, {
-        name: editForm.name,
-        status: editForm.status,
-        address: editForm.address || null,
-        city: editForm.city || null,
-        state: editForm.state || null,
-        zip: editForm.zip || null,
-        property_type: editForm.property_type || null,
-        notes: editForm.notes || null,
-      });
-
-      setDeal(updated);
-      setShowEditDeal(false);
-      toast.success("Deal updated", `"${updated.name}" has been saved`);
-    } catch (error) {
-      console.error("Error updating deal:", error);
-      toast.error("Failed to update deal", "Please try again");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleAddWorkflow = async (templateId: string) => {
-    try {
-      const template = templates.find((t) => t.id === templateId);
-      if (!template) return;
-
-      const newWorkflow = await createDealWorkflow({
-        deal_id: dealId,
-        template_id: templateId,
-        sort_order: workflows.length,
-      });
-
-      const workflowTemplate = newWorkflow.template as WorkflowTemplate;
-
-      setWorkflows((prev) => [
-        ...prev,
-        {
-          id: newWorkflow.id,
-          name: workflowTemplate?.name || "Workflow",
-          color: workflowTemplate?.color || "#6b7280",
-          template_id: templateId,
-          tasks: [],
-        },
-      ]);
-
-      setExpandedWorkflows((prev) => new Set([...prev, newWorkflow.id]));
-      setShowAddWorkflow(false);
-    } catch (error) {
-      console.error("Error adding workflow:", error);
-    }
-  };
-
-  const handleDeleteWorkflow = async (workflowId: string) => {
-    if (!confirm("Delete this workflow and all its tasks?")) return;
-
-    try {
-      await deleteDealWorkflow(workflowId);
-      setWorkflows((prev) => prev.filter((w) => w.id !== workflowId));
-    } catch (error) {
-      console.error("Error deleting workflow:", error);
-    }
-  };
-
-  const handleTaskUpdate = async (workflowId: string, taskId: string, updates: Partial<Task>) => {
-    try {
-      // Map Task updates to database updates
-      const dbUpdates: Record<string, unknown> = {};
-      if (updates.status) dbUpdates.status = updates.status;
-      if (updates.priority) dbUpdates.priority = updates.priority;
-      if (updates.task) dbUpdates.task = updates.task;
-
-      await updateTask(taskId, dbUpdates);
-
-      setWorkflows((prev) =>
-        prev.map((w) => {
-          if (w.id !== workflowId) return w;
-          return {
-            ...w,
-            tasks: w.tasks.map((t) =>
-              t.id === taskId ? { ...t, ...updates } : t
-            ),
-          };
-        })
-      );
-    } catch (error) {
-      console.error("Error updating task:", error);
-    }
-  };
-
-  const handleTaskAdd = async (workflowId: string, task: Omit<Task, "id">) => {
-    try {
-      const newTask = await createTask({
-        workflow_id: workflowId,
-        task: task.task,
-        status: task.status,
-        priority: task.priority,
-        due_date: task.due_date,
-      });
-
-      setWorkflows((prev) =>
-        prev.map((w) => {
-          if (w.id !== workflowId) return w;
-          return {
-            ...w,
-            tasks: [
-              ...w.tasks,
-              {
-                id: newTask.id,
-                task: newTask.task,
-                status: newTask.status as Task["status"],
-                priority: newTask.priority as Task["priority"],
-                owner: newTask.owner?.name || null,
-                assignee: newTask.assignee?.name || null,
-                opened_at: newTask.opened_at,
-                due_date: newTask.due_date,
-              },
-            ],
-          };
-        })
-      );
-    } catch (error) {
-      console.error("Error adding task:", error);
-    }
-  };
-
-  const handleTaskDelete = async (workflowId: string, taskId: string) => {
-    try {
-      await deleteTask(taskId);
-      setWorkflows((prev) =>
-        prev.map((w) => {
-          if (w.id !== workflowId) return w;
-          return {
-            ...w,
-            tasks: w.tasks.filter((t) => t.id !== taskId),
-          };
-        })
-      );
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
-  };
-
-  // Get templates not yet added to this deal
-  const availableTemplates = templates.filter(
-    (t) => !workflows.some((w) => w.template_id === t.id)
-  );
-
-  if (loading) {
-    return <SkeletonDealDetail />;
-  }
+      return {
+        completed,
+        inProgress,
+        blocked,
+        notStarted,
+        total: completed + inProgress + blocked + notStarted,
+        workflowCount: workflows.length,
+      };
+    },
+    staleTime: 30 * 1000,
+  });
 
   if (!deal) {
-    return (
-      <div className="space-y-6">
-        <Breadcrumb
-          items={[
-            { label: "Deals", href: "/deals", icon: Building2 },
-            { label: "Not Found" },
-          ]}
-        />
-        <div className="text-center py-12">
-          <p className="text-foreground-muted">Deal not found</p>
-          <Link href="/deals" className="text-primary hover:underline mt-2 inline-block">
-            Back to Deals
-          </Link>
-        </div>
-      </div>
-    );
+    return null; // Layout handles loading/not found
   }
+
+  const location = [deal.city, deal.state].filter(Boolean).join(", ");
+  const fullAddress = [deal.address, deal.city, deal.state, deal.zip].filter(Boolean).join(", ");
+  const createdDate = new Date(deal.created_at).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const statusInfo = statusConfig[deal.status] || statusConfig.active;
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: "Deals", href: "/deals", icon: Building2 },
-          { label: deal.name },
-        ]}
-      />
-
-      {/* Deal header */}
-      <div className="flex gap-6">
-        {/* Property image */}
-        <div className="relative h-40 w-64 shrink-0 rounded-lg bg-surface overflow-hidden border border-border">
-          {deal.image_url ? (
-            <Image
-              src={deal.image_url}
-              alt={deal.name}
-              fill
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <Building2 className="h-16 w-16 text-foreground-subtle" />
-            </div>
-          )}
-        </div>
-
-        {/* Deal info */}
-        <div className="flex-1 space-y-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-foreground">
-                  {deal.name}
-                </h1>
-                <Badge variant={statusColors[deal.status]?.badge || "secondary"}>
-                  {statusColors[deal.status]?.label || deal.status}
-                </Badge>
+      {/* Deal Header */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            {/* Inline Name Editing */}
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleNameSave();
+                    if (e.key === "Escape") setIsEditingName(false);
+                  }}
+                  className="text-2xl font-semibold text-foreground bg-transparent border-b-2 border-primary outline-none px-1 py-0"
+                />
+                <button
+                  onClick={handleNameSave}
+                  className="p-1 rounded hover:bg-surface-hover text-success"
+                >
+                  <Check className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setIsEditingName(false)}
+                  className="p-1 rounded hover:bg-surface-hover text-foreground-muted"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              {(deal.address || deal.city) && (
-                <div className="mt-1 flex items-center gap-1 text-foreground-muted">
-                  <MapPin className="h-4 w-4" />
-                  <span>
-                    {[deal.address, deal.city, deal.state, deal.zip].filter(Boolean).join(", ")}
-                  </span>
+            ) : (
+              <h1
+                onClick={() => {
+                  setEditedName(deal.name);
+                  setIsEditingName(true);
+                }}
+                className="text-2xl font-semibold text-foreground cursor-pointer hover:text-primary transition-colors group flex items-center gap-2"
+              >
+                {deal.name}
+                <Pencil className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+              </h1>
+            )}
+
+            {/* Inline Status Selector */}
+            <div className="relative" ref={statusDropdownRef}>
+              <button
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                className="focus:outline-none"
+              >
+                <Badge
+                  variant={statusInfo.badge}
+                  className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all flex items-center gap-1"
+                >
+                  {statusInfo.label}
+                  <ChevronDown className={cn(
+                    "h-3 w-3 transition-transform",
+                    showStatusDropdown && "rotate-180"
+                  )} />
+                </Badge>
+              </button>
+
+              {showStatusDropdown && (
+                <div className="absolute top-full left-0 mt-2 z-50 min-w-[150px] bg-surface-elevated border border-border rounded-lg shadow-lg overflow-hidden">
+                  {Object.entries(statusConfig).map(([status, config]) => (
+                    <button
+                      key={status}
+                      onClick={() => handleStatusChange(status as "active" | "closed" | "on-hold")}
+                      className={cn(
+                        "flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors",
+                        deal.status === status ? "bg-surface-active" : "hover:bg-surface-hover"
+                      )}
+                    >
+                      <span className="text-foreground">{config.label}</span>
+                      {deal.status === status && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={openEditDialog}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+          </div>
+          {location && (
+            <div className="flex items-center gap-1.5 text-sm text-foreground-muted">
+              <MapPin className="h-3.5 w-3.5" />
+              <span>{location}</span>
             </div>
-          </div>
-
-          {/* Property details */}
-          <div className="flex flex-wrap gap-4 text-sm">
-            {deal.property_type && (
-              <div className="flex items-center gap-2">
-                <span className="text-foreground-muted">Type:</span>
-                <Badge variant="secondary" className="capitalize">
-                  {deal.property_type}
-                </Badge>
-              </div>
-            )}
-            {deal.sf && (
-              <div>
-                <span className="text-foreground-muted">Size:</span>{" "}
-                <span className="text-foreground font-medium">
-                  {Number(deal.sf).toLocaleString()} SF
-                </span>
-              </div>
-            )}
-            {deal.year_built && (
-              <div>
-                <span className="text-foreground-muted">Built:</span>{" "}
-                <span className="text-foreground font-medium">
-                  {deal.year_built}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {deal.notes && (
-            <p className="text-sm text-foreground-muted">{deal.notes}</p>
           )}
         </div>
+        <Link href={`/deals/${dealId}/settings`}>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
+        </Link>
       </div>
 
-      {/* Deal Progress Summary */}
-      {workflows.length > 0 && (
-        <Card className="p-4">
+      {/* Deal Info Card */}
+      <Card className="p-6">
+        <div className="flex gap-6">
+          {/* Property Image */}
+          <div className="relative h-32 w-48 shrink-0 rounded-lg bg-surface overflow-hidden border border-border">
+            {deal.image_url ? (
+              <Image
+                src={deal.image_url}
+                alt={deal.name}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <Building2 className="h-12 w-12 text-foreground-subtle" />
+              </div>
+            )}
+          </div>
+
+          {/* Property Details */}
+          <div className="flex-1 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              {deal.property_type && (
+                <div>
+                  <span className="text-foreground-muted block mb-1">Property Type</span>
+                  <Badge variant="secondary" className="capitalize">
+                    {propertyTypeLabels[deal.property_type] || deal.property_type}
+                  </Badge>
+                </div>
+              )}
+              {deal.sf && (
+                <div>
+                  <span className="text-foreground-muted block mb-1">Size</span>
+                  <div className="flex items-center gap-1 text-foreground font-medium">
+                    <Ruler className="h-4 w-4" />
+                    {Number(deal.sf).toLocaleString()} SF
+                  </div>
+                </div>
+              )}
+              {deal.year_built && (
+                <div>
+                  <span className="text-foreground-muted block mb-1">Year Built</span>
+                  <span className="text-foreground font-medium">{deal.year_built}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-foreground-muted block mb-1">Created</span>
+                <div className="flex items-center gap-1 text-foreground font-medium">
+                  <Calendar className="h-4 w-4" />
+                  {createdDate}
+                </div>
+              </div>
+            </div>
+
+            {fullAddress && (
+              <div className="flex items-start gap-2 text-sm text-foreground-muted">
+                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{fullAddress}</span>
+              </div>
+            )}
+
+            {deal.notes && (
+              <p className="text-sm text-foreground-muted">{deal.notes}</p>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Progress Summary */}
+      {taskSummary && taskSummary.total > 0 && (
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-foreground">Overall Progress</h3>
+            <h3 className="text-sm font-medium text-foreground">Project Progress</h3>
             <span className="text-sm text-foreground-muted">
-              {workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "completed").length, 0)} / {workflows.reduce((acc, w) => acc + w.tasks.length, 0)} tasks
+              {taskSummary.completed} / {taskSummary.total} tasks completed
             </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Total Progress */}
-            <div className="space-y-2">
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 <CheckCircle2 className="h-4 w-4 text-[#3ECF8E]" />
                 <span>Completed</span>
               </div>
               <div className="text-2xl font-semibold text-foreground">
-                {workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "completed").length, 0)}
+                {taskSummary.completed}
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 <Circle className="h-4 w-4 text-[#60A5FA]" />
                 <span>In Progress</span>
               </div>
               <div className="text-2xl font-semibold text-foreground">
-                {workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "in_progress").length, 0)}
+                {taskSummary.inProgress}
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 <AlertCircle className="h-4 w-4 text-[#F87171]" />
                 <span>Blocked</span>
               </div>
               <div className="text-2xl font-semibold text-foreground">
-                {workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "blocked").length, 0)}
+                {taskSummary.blocked}
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 <Circle className="h-4 w-4 text-[#6B6B6B]" />
                 <span>To Do</span>
               </div>
               <div className="text-2xl font-semibold text-foreground">
-                {workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "not_started").length, 0)}
+                {taskSummary.notStarted}
               </div>
             </div>
           </div>
-          {/* Progress bar */}
-          <div className="mt-4 h-2 bg-[#2A2A2A] rounded-full overflow-hidden flex">
-            {(() => {
-              const total = workflows.reduce((acc, w) => acc + w.tasks.length, 0);
-              if (total === 0) return null;
-              const completed = workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "completed").length, 0);
-              const inProgress = workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "in_progress").length, 0);
-              const blocked = workflows.reduce((acc, w) => acc + w.tasks.filter((t) => t.status === "blocked").length, 0);
-              return (
-                <>
-                  <div style={{ width: `${(completed / total) * 100}%` }} className="bg-[#3ECF8E] transition-all" />
-                  <div style={{ width: `${(inProgress / total) * 100}%` }} className="bg-[#60A5FA] transition-all" />
-                  <div style={{ width: `${(blocked / total) * 100}%` }} className="bg-[#F87171] transition-all" />
-                </>
-              );
-            })()}
+
+          {/* Progress Bar */}
+          <div className="h-2 bg-[#2A2A2A] rounded-full overflow-hidden flex">
+            {taskSummary.total > 0 && (
+              <>
+                <div
+                  style={{ width: `${(taskSummary.completed / taskSummary.total) * 100}%` }}
+                  className="bg-[#3ECF8E] transition-all"
+                />
+                <div
+                  style={{ width: `${(taskSummary.inProgress / taskSummary.total) * 100}%` }}
+                  className="bg-[#60A5FA] transition-all"
+                />
+                <div
+                  style={{ width: `${(taskSummary.blocked / taskSummary.total) * 100}%` }}
+                  className="bg-[#F87171] transition-all"
+                />
+              </>
+            )}
+          </div>
+
+          {/* Link to Project tab */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <Link href={`/deals/${dealId}/project`}>
+              <Button variant="outline" size="sm">
+                <FolderKanban className="h-4 w-4 mr-2" />
+                View All Tasks
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
           </div>
         </Card>
       )}
 
-      {/* Workflows section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Workflows</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAddWorkflow(true)}
-            disabled={availableTemplates.length === 0}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Workflow
-          </Button>
-        </div>
-
-        {/* Workflow accordions */}
-        {workflows.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-foreground-muted">
-              No workflows yet. Add a workflow to start tracking tasks.
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setShowAddWorkflow(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add First Workflow
-            </Button>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link href={`/deals/${dealId}/project`}>
+          <Card className="p-4 hover:bg-surface-hover transition-colors cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-surface-elevated">
+                <FolderKanban className="h-5 w-5 text-foreground-muted" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Project</h4>
+                <p className="text-xs text-foreground-muted">
+                  {taskSummary?.workflowCount ?? 0} workflows, {taskSummary?.total ?? 0} tasks
+                </p>
+              </div>
+            </div>
           </Card>
-        ) : (
-          <div className="space-y-3">
-            {workflows.map((workflow) => {
-              const isExpanded = expandedWorkflows.has(workflow.id);
-              const completedTasks = workflow.tasks.filter(
-                (t) => t.status === "completed"
-              ).length;
-              const totalTasks = workflow.tasks.length;
+        </Link>
 
-              return (
-                <Card key={workflow.id} className="overflow-hidden">
-                  {/* Workflow header */}
-                  <div className="flex items-center justify-between p-4 hover:bg-surface-hover transition-colors">
-                    <button
-                      onClick={() => toggleWorkflow(workflow.id)}
-                      className="flex items-center gap-3 flex-1"
-                    >
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: workflow.color }}
-                      />
-                      <span className="font-medium text-foreground">
-                        {workflow.name}
-                      </span>
-                      <span className="text-sm text-foreground-muted">
-                        {completedTasks}/{totalTasks} tasks
-                      </span>
-                    </button>
-                    <div className="flex items-center gap-2">
-                      {/* Mini progress bar */}
-                      {totalTasks > 0 && (
-                        <div className="h-1.5 w-20 bg-surface-hover rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-300"
-                            style={{
-                              backgroundColor: workflow.color,
-                              width: `${(completedTasks / totalTasks) * 100}%`,
-                            }}
-                          />
-                        </div>
-                      )}
-                      <button
-                        onClick={() => handleDeleteWorkflow(workflow.id)}
-                        className="rounded-md p-1 hover:bg-error-muted hover:text-error transition-all opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => toggleWorkflow(workflow.id)}>
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-foreground-muted" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-foreground-muted" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+        <Link href={`/deals/${dealId}/people`}>
+          <Card className="p-4 hover:bg-surface-hover transition-colors cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-surface-elevated">
+                <Users className="h-5 w-5 text-foreground-muted" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">People</h4>
+                <p className="text-xs text-foreground-muted">Manage deal contacts</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
 
-                  {/* Tasks table */}
-                  {isExpanded && (
-                    <div className="border-t border-border">
-                      <TasksTable
-                        tasks={workflow.tasks}
-                        workflowId={workflow.id}
-                        onTaskUpdate={(taskId, updates) =>
-                          handleTaskUpdate(workflow.id, taskId, updates)
-                        }
-                        onTaskAdd={(task) => handleTaskAdd(workflow.id, task)}
-                        onTaskDelete={(taskId) =>
-                          handleTaskDelete(workflow.id, taskId)
-                        }
-                      />
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
+        <Link href={`/deals/${dealId}/resources`}>
+          <Card className="p-4 hover:bg-surface-hover transition-colors cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-surface-elevated">
+                <FileText className="h-5 w-5 text-foreground-muted" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Resources</h4>
+                <p className="text-xs text-foreground-muted">Documents & artifacts</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
       </div>
 
-      {/* Add Workflow Dialog */}
-      <Dialog open={showAddWorkflow} onOpenChange={setShowAddWorkflow}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Workflow</DialogTitle>
-            <DialogDescription>
-              Select a workflow template to add to this deal
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogBody className="space-y-2">
-            {availableTemplates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => handleAddWorkflow(template.id)}
-                className="flex w-full items-center gap-3 p-3 rounded-lg hover:bg-surface-hover transition-colors"
-              >
-                <div
-                  className="h-3 w-3 rounded-full"
-                  style={{ backgroundColor: template.color || "#6b7280" }}
-                />
-                <span className="font-medium text-foreground">
-                  {template.name}
-                </span>
-              </button>
-            ))}
-
-            {availableTemplates.length === 0 && (
-              <p className="text-center text-foreground-muted py-4">
-                All workflow templates have been added to this deal.
-              </p>
-            )}
-          </DialogBody>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddWorkflow(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Deal Dialog */}
-      <Dialog open={showEditDeal} onOpenChange={setShowEditDeal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Deal</DialogTitle>
-            <DialogDescription>
-              Update the deal details
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogBody className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="edit-name" className="text-sm font-medium text-foreground">
-                Deal Name *
-              </label>
-              <Input
-                id="edit-name"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                placeholder="Deal name"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="edit-status" className="text-sm font-medium text-foreground">
-                  Status
-                </label>
-                <Select
-                  id="edit-status"
-                  value={editForm.status}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as "active" | "on-hold" | "closed" })}
-                >
-                  {statusOptions.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-property-type" className="text-sm font-medium text-foreground">
-                  Property Type
-                </label>
-                <Select
-                  id="edit-property-type"
-                  value={editForm.property_type}
-                  onChange={(e) => setEditForm({ ...editForm, property_type: e.target.value })}
-                >
-                  {propertyTypes.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="edit-address" className="text-sm font-medium text-foreground">
-                Address
-              </label>
-              <Input
-                id="edit-address"
-                value={editForm.address}
-                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                placeholder="Street address"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <label htmlFor="edit-city" className="text-sm font-medium text-foreground">
-                  City
-                </label>
-                <Input
-                  id="edit-city"
-                  value={editForm.city}
-                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                  placeholder="City"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-state" className="text-sm font-medium text-foreground">
-                  State
-                </label>
-                <Input
-                  id="edit-state"
-                  value={editForm.state}
-                  onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                  placeholder="TX"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="edit-zip" className="text-sm font-medium text-foreground">
-                  ZIP
-                </label>
-                <Input
-                  id="edit-zip"
-                  value={editForm.zip}
-                  onChange={(e) => setEditForm({ ...editForm, zip: e.target.value })}
-                  placeholder="ZIP"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="edit-notes" className="text-sm font-medium text-foreground">
-                Notes
-              </label>
-              <Input
-                id="edit-notes"
-                value={editForm.notes}
-                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                placeholder="Additional notes..."
-              />
-            </div>
-          </DialogBody>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDeal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateDeal} disabled={!editForm.name} loading={saving}>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Notes Section */}
+      <DealNotes dealId={dealId} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, Check, LayoutList, Layers, ChevronDown, ChevronRight, Kanban } from "lucide-react";
+import { Building2, Check, LayoutList, Layers, ChevronDown, ChevronRight, Kanban, Loader2 } from "lucide-react";
 import {
   TableLayout,
   Toolbar,
@@ -13,10 +13,13 @@ import {
   InlineTextEdit,
   InlineSelectEdit,
   InlineDateEdit,
+  InlineContactSelect,
 } from "@/components/table-editor";
-import { TaskKanban } from "@/components/tasks/task-kanban";
+import { TaskKanban, TaskDetailPanel } from "@/components/tasks";
 import { useToastActions } from "@/components/ui/toast";
-import { getAllTasks, updateTask } from "@/lib/supabase/queries";
+import { useTasks, useUpdateTask, type TaskWithDeal } from "@/lib/hooks/use-tasks";
+import { useQuery } from "@tanstack/react-query";
+import { getContacts } from "@/lib/supabase/queries";
 import { format, isPast, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -61,26 +64,6 @@ const priorityOptions = [
   { value: "low", label: "Low", bg: "rgba(62, 207, 142, 0.15)", text: "#3ECF8E" },
 ];
 
-interface TaskWithDeal {
-  id: string;
-  task: string;
-  status: string;
-  priority: string;
-  due_date: string | null;
-  notes: string | null;
-  completed_at: string | null;
-  created_at: string;
-  workflow_id: string;
-  assignee: { id: string; name: string } | null;
-  owner: { id: string; name: string } | null;
-  workflow: {
-    id: string;
-    deal_id: string;
-    name: string | null;
-    deal: { id: string; name: string; status: string } | null;
-  } | null;
-}
-
 interface EditingCell {
   rowId: string;
   columnId: string;
@@ -88,86 +71,71 @@ interface EditingCell {
 
 export default function TasksPage() {
   const toast = useToastActions();
-  const [tasks, setTasks] = React.useState<TaskWithDeal[]>([]);
-  const [loading, setLoading] = React.useState(true);
+
+  // React Query for tasks
+  const { data: tasks = [], isLoading: loading } = useTasks();
+  const updateMutation = useUpdateTask();
+
+  // Fetch contacts for assignee dropdown
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: getContacts,
+    staleTime: 60 * 1000,
+  });
+
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [editingCell, setEditingCell] = React.useState<EditingCell | null>(null);
   const [viewMode, setViewMode] = React.useState<ViewMode>("list");
   const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set());
-
-  // Fetch tasks
-  React.useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const data = await getAllTasks();
-        setTasks(data as TaskWithDeal[]);
-      } catch {
-        toast.error("Failed to load tasks", "Please refresh the page");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchTasks();
-  }, [toast]);
+  const [selectedTask, setSelectedTask] = React.useState<TaskWithDeal | null>(null);
 
   // Handle task completion toggle
-  const handleToggleComplete = async (e: React.MouseEvent, task: TaskWithDeal) => {
+  const handleToggleComplete = (e: React.MouseEvent, task: TaskWithDeal) => {
     e.stopPropagation();
     const newStatus = task.status === "completed" ? "not_started" : "completed";
 
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
+    updateMutation.mutate(
+      { id: task.id, updates: { status: newStatus as "not_started" | "in_progress" | "blocked" | "completed" } },
+      {
+        onSuccess: () => {
+          toast.success(
+            newStatus === "completed" ? "Task completed" : "Task reopened",
+            task.task
+          );
+        },
+        onError: () => {
+          toast.error("Failed to update task", "Please try again");
+        },
+      }
     );
-
-    try {
-      await updateTask(task.id, { status: newStatus });
-      toast.success(
-        newStatus === "completed" ? "Task completed" : "Task reopened",
-        task.task
-      );
-    } catch {
-      // Rollback on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === task.id ? { ...t, status: task.status } : t))
-      );
-      toast.error("Failed to update task", "Please try again");
-    }
   };
 
   // Handle double-click to edit cell
   const handleRowDoubleClick = (task: TaskWithDeal, columnId: string) => {
     // Only allow editing on editable columns
-    if (["title", "status", "priority", "due_date"].includes(columnId)) {
+    if (["title", "status", "priority", "due_date", "assignee"].includes(columnId)) {
       setEditingCell({ rowId: task.id, columnId });
     }
   };
 
   // Handle inline edit save
-  const handleInlineSave = async (taskId: string, field: string, value: string | null) => {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return;
-
+  const handleInlineSave = (taskId: string, field: string, value: string | null) => {
     const dbField = field === "title" ? "task" : field;
-
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, [dbField]: value } : t))
-    );
     setEditingCell(null);
 
-    try {
-      await updateTask(taskId, { [dbField]: value });
-      toast.success("Updated", `Task ${field.replace("_", " ")} updated`);
-    } catch {
-      // Rollback on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? task : t))
-      );
-      toast.error("Failed to update", "Please try again");
-    }
+    updateMutation.mutate(
+      { id: taskId, updates: { [dbField]: value } },
+      {
+        onSuccess: () => {
+          toast.success("Updated", `Task ${field.replace("_", " ")} updated`);
+        },
+        onError: () => {
+          toast.error("Failed to update", "Please try again");
+        },
+      }
+    );
   };
 
   // Handle inline edit cancel
@@ -388,8 +356,16 @@ export default function TasksPage() {
       id: "assignee",
       header: "Assignee",
       width: "15%",
+      editable: true,
       render: (task: TaskWithDeal) =>
-        task.assignee ? (
+        isEditing(task.id, "assignee") ? (
+          <InlineContactSelect
+            value={task.assignee?.id || null}
+            contacts={contacts.map((c) => ({ id: c.id, name: c.name }))}
+            onSave={(value) => handleInlineSave(task.id, "assignee_id", value)}
+            onCancel={handleInlineCancel}
+          />
+        ) : task.assignee ? (
           <div className="flex items-center gap-2">
             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(167,139,250,0.15)] text-[10px] font-medium text-[#A78BFA]">
               {task.assignee.name.charAt(0).toUpperCase()}
@@ -408,7 +384,7 @@ export default function TasksPage() {
     return (
       <TableLayout activeTable="tasks">
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-[13px] text-[#6B6B6B]">Loading tasks...</div>
+          <Loader2 className="h-6 w-6 animate-spin text-foreground-muted" />
         </div>
       </TableLayout>
     );
@@ -472,6 +448,7 @@ export default function TasksPage() {
             selectedIds={selectedIds}
             onSelectAll={toggleAll}
             onSelectRow={toggleRow}
+            onRowClick={setSelectedTask}
             onRowDoubleClick={handleRowDoubleClick}
             isAllSelected={isAllSelected}
             isSomeSelected={isSomeSelected}
@@ -610,6 +587,12 @@ export default function TasksPage() {
           )}
         </div>
       )}
+      {/* Task Detail Panel */}
+      <TaskDetailPanel
+        task={selectedTask}
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+      />
     </TableLayout>
   );
 }

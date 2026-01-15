@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createDeal } from "@/lib/supabase/queries";
-import { createClient } from "@/lib/supabase/client";
+import { createDealAction } from "@/lib/supabase/actions";
 import { useToastActions } from "@/components/ui/toast";
 import type { Deal } from "@/lib/supabase/types";
 
@@ -70,15 +69,8 @@ export function NewDealPanel({ open, onClose, onDealCreated }: NewDealPanelProps
 
     setSaving(true);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        toast.error("Not authenticated", "Please log in to create a deal");
-        return;
-      }
-
-      const created = await createDeal({
+      // Use server action which also creates default workflows and tasks
+      const created = await createDealAction({
         name: formData.name.trim(),
         address: formData.address || null,
         city: formData.city || null,
@@ -92,12 +84,12 @@ export function NewDealPanel({ open, onClose, onDealCreated }: NewDealPanelProps
         lot_size: null,
         year_built: null,
         zoning: null,
-        user_id: user.id,
       });
 
-      onDealCreated(created);
+      const createdDeal = created as unknown as Deal;
+      onDealCreated(createdDeal);
       onClose();
-      toast.success("Deal created", `"${created.name}" has been added`);
+      toast.success("Deal created", `"${createdDeal.name}" has been added with default workflows`);
     } catch (error) {
       console.error("Error creating deal:", error);
       toast.error("Failed to create deal", "Please try again");

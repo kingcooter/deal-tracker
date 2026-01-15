@@ -239,7 +239,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         titleMatches: match.matches,
         subtitle: contact.company || contact.email || undefined,
         icon: <Users className="h-4 w-4" />,
-        href: `/contacts?highlight=${contact.id}`,
+        href: `/contacts/${contact.id}`,
         score: match.score,
       });
     }

@@ -148,7 +148,7 @@ export function ActivityFeed() {
       case "deal":
         return `/deals/${item.entityId}`;
       case "contact":
-        return `/contacts`;
+        return `/contacts/${item.entityId}`;
       default:
         return "/tasks";
     }

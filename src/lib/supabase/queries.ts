@@ -358,3 +358,163 @@ export async function removeContactFromDeal(dealId: string, contactId: string) {
 
   if (error) throw error;
 }
+
+// ============================================
+// DEAL DOCUMENTS
+// ============================================
+
+export async function getDealDocuments(dealId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_documents")
+    .select("*")
+    .eq("deal_id", dealId)
+    .order("uploaded_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createDealDocument(document: {
+  deal_id: string;
+  file_name: string;
+  file_url: string;
+  file_size?: number;
+  file_type?: string;
+  category?: string;
+  description?: string;
+  user_id: string;
+}) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_documents")
+    .insert(document as never)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateDealDocument(id: string, updates: {
+  file_name?: string;
+  category?: string;
+  description?: string;
+}) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_documents")
+    .update(updates as never)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteDealDocument(id: string) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("deal_documents")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+// ============================================
+// CONTACT DETAILS (for contact profile page)
+// ============================================
+
+export async function getContactDeals(contactId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_contacts")
+    .select(`
+      *,
+      deal:deals(*)
+    `)
+    .eq("contact_id", contactId);
+
+  if (error) throw error;
+  return data;
+}
+
+// ============================================
+// DEAL NOTES
+// ============================================
+
+export async function getDealNotes(dealId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_notes")
+    .select("*")
+    .eq("deal_id", dealId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createDealNote(note: {
+  deal_id: string;
+  content: string;
+  user_id: string;
+}) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_notes")
+    .insert(note as never)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateDealNote(id: string, updates: { content: string }) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("deal_notes")
+    .update(updates as never)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteDealNote(id: string) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("deal_notes")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+// ============================================
+// CONTACT DETAILS (for contact profile page)
+// ============================================
+
+export async function getContactTasks(contactId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(`
+      *,
+      workflow:deal_workflows(
+        id,
+        name,
+        deal:deals(id, name)
+      )
+    `)
+    .eq("assignee_id", contactId)
+    .order("due_date", { ascending: true, nullsFirst: false });
+
+  if (error) throw error;
+  return data;
+}

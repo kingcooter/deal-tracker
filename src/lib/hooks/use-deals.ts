@@ -43,6 +43,8 @@ export function useCreateDeal() {
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["deals"] });
+            // Also invalidate tasks since new deals create default tasks
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
             // Also invalidate sidebar counts
             queryClient.invalidateQueries({ queryKey: ["sidebar-counts"] });
         },

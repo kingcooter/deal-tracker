@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, X, Search, User } from "lucide-react";
 
 // ============================================
 // INLINE TEXT EDIT
@@ -295,6 +295,148 @@ export function InlineDateEdit({
       >
         <X className="h-3.5 w-3.5" />
       </button>
+    </div>
+  );
+}
+
+// ============================================
+// INLINE CONTACT SELECT (for assignee)
+// ============================================
+
+interface ContactOption {
+  id: string;
+  name: string;
+}
+
+interface InlineContactSelectProps {
+  value: string | null;
+  contacts: ContactOption[];
+  onSave: (value: string | null) => void;
+  onCancel: () => void;
+  className?: string;
+}
+
+export function InlineContactSelect({
+  value,
+  contacts,
+  onSave,
+  onCancel,
+  className,
+}: InlineContactSelectProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [search, setSearch] = React.useState("");
+  const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+
+  const currentContact = contacts.find((c) => c.id === value);
+
+  // Filter contacts by search
+  const filteredContacts = React.useMemo(() => {
+    if (!search.trim()) return contacts;
+    const q = search.toLowerCase();
+    return contacts.filter((c) => c.name.toLowerCase().includes(q));
+  }, [contacts, search]);
+
+  React.useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  React.useEffect(() => {
+    setHighlightedIndex(0);
+  }, [filteredContacts.length]);
+
+  const handleSelect = React.useCallback((contactId: string | null) => {
+    onSave(contactId);
+  }, [onSave]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onCancel();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onCancel]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onCancel();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => Math.min(prev + 1, filteredContacts.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (highlightedIndex === 0) {
+        handleSelect(null); // Unassigned
+      } else {
+        handleSelect(filteredContacts[highlightedIndex - 1]?.id || null);
+      }
+    }
+  };
+
+  return (
+    <div ref={containerRef} className={cn("relative", className)}>
+      {/* Search Input */}
+      <div className="flex items-center h-8 px-2 bg-[#2A2A2A] border-2 border-[#3ECF8E] rounded">
+        <Search className="h-3.5 w-3.5 text-[#6B6B6B] mr-2 flex-shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={currentContact?.name || "Search contacts..."}
+          className="flex-1 bg-transparent text-[13px] text-[#EDEDED] outline-none placeholder:text-[#6B6B6B]"
+        />
+      </div>
+
+      {/* Dropdown */}
+      <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[180px] max-h-[200px] overflow-y-auto bg-[#2A2A2A] border border-[#3E3E3E] rounded-lg shadow-lg">
+        {/* Unassigned option */}
+        <button
+          onClick={() => handleSelect(null)}
+          onMouseEnter={() => setHighlightedIndex(0)}
+          className={cn(
+            "flex items-center gap-2 w-full h-9 px-3 text-left transition-colors",
+            highlightedIndex === 0 ? "bg-[#3E3E3E]" : "hover:bg-[#323232]"
+          )}
+        >
+          <User className="h-4 w-4 text-[#6B6B6B]" />
+          <span className="text-[13px] text-[#6B6B6B] italic">Unassigned</span>
+          {!value && <Check className="h-3.5 w-3.5 text-[#3ECF8E] ml-auto" />}
+        </button>
+
+        {/* Contact options */}
+        {filteredContacts.map((contact, index) => (
+          <button
+            key={contact.id}
+            onClick={() => handleSelect(contact.id)}
+            onMouseEnter={() => setHighlightedIndex(index + 1)}
+            className={cn(
+              "flex items-center gap-2 w-full h-9 px-3 text-left transition-colors",
+              highlightedIndex === index + 1 ? "bg-[#3E3E3E]" : "hover:bg-[#323232]"
+            )}
+          >
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(167,139,250,0.15)] text-[10px] font-medium text-[#A78BFA] flex-shrink-0">
+              {contact.name.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-[13px] text-[#EDEDED] truncate">{contact.name}</span>
+            {contact.id === value && <Check className="h-3.5 w-3.5 text-[#3ECF8E] ml-auto flex-shrink-0" />}
+          </button>
+        ))}
+
+        {filteredContacts.length === 0 && search && (
+          <div className="px-3 py-2 text-[12px] text-[#6B6B6B]">
+            No contacts found
+          </div>
+        )}
+      </div>
     </div>
   );
 }
