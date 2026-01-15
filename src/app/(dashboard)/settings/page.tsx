@@ -2,9 +2,7 @@
 
 import * as React from "react";
 import {
-  Settings,
   Bell,
-  User,
   Palette,
   Database,
   Keyboard,

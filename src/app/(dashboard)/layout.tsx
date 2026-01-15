@@ -1,10 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Sidebar } from "@/components/layout/sidebar";
-import { SidebarProvider } from "@/components/layout/sidebar-context";
 import { Header } from "@/components/layout/header";
-import { MobileSidebar, MobileMenuButton } from "@/components/layout/mobile-sidebar";
+import { NavigationTabs } from "@/components/layout/navigation-tabs";
 import { CommandPalette, useCommandPalette } from "@/components/command-palette";
 import { GlobalSearch, useGlobalSearchModal } from "@/components/global-search";
 import { ToastProvider } from "@/components/ui/toast";
@@ -17,8 +15,6 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const { open: commandPaletteOpen, setOpen: setCommandPaletteOpen } = useCommandPalette();
   const { isOpen: searchOpen, setIsOpen: setSearchOpen } = useGlobalSearchModal();
   const { showHelp, setShowHelp } = useShortcutsHelp();
@@ -27,36 +23,28 @@ export default function DashboardLayout({
   useNavigationShortcuts();
 
   return (
-    <SidebarProvider>
-      <ToastProvider>
-        <div className="flex h-screen overflow-hidden bg-background">
-          {/* Desktop sidebar - hidden on mobile */}
-          <div className="hidden md:block">
-            <Sidebar
-              collapsed={sidebarCollapsed}
-              onCollapsedChange={setSidebarCollapsed}
-            />
-          </div>
-
-          {/* Mobile sidebar */}
-          <MobileSidebar open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen} />
-
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <Header
-              onSearchClick={() => setSearchOpen(true)}
-              mobileMenuButton={
-                <MobileMenuButton onClick={() => setMobileSidebarOpen(true)} />
-              }
-            />
-            <main className="flex-1 overflow-y-auto p-4 md:p-6">
-              <ErrorBoundary>{children}</ErrorBoundary>
-            </main>
-          </div>
-          <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
-          <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
-          <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
+    <ToastProvider>
+      <div className="flex h-screen flex-col bg-background">
+        {/* Top Navigation Stack */}
+        <div className="flex-shrink-0 z-10 relative">
+          <Header
+            onSearchClick={() => setSearchOpen(true)}
+          />
+          <NavigationTabs />
         </div>
-      </ToastProvider>
-    </SidebarProvider>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="container mx-auto max-w-[1600px] p-4 md:p-6 lg:p-8">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </div>
+        </main>
+
+        {/* Global Overlays */}
+        <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
+        <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+        <KeyboardShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
+      </div>
+    </ToastProvider>
   );
 }

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 
 interface ExportMenuProps<T> {
   data: T[];
-  filename: string;
   onExportCSV: (data: T[]) => void;
   onExportJSON: (data: T[]) => void;
   disabled?: boolean;
@@ -16,7 +15,6 @@ interface ExportMenuProps<T> {
 
 export function ExportMenu<T>({
   data,
-  filename,
   onExportCSV,
   onExportJSON,
   disabled,

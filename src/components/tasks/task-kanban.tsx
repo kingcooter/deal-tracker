@@ -48,9 +48,8 @@ export function TaskKanban() {
   React.useEffect(() => {
     getAllTasks()
       .then((data) => setTasks(data as TaskWithDeal[]))
-      .catch((error) => {
-        console.error("Error fetching tasks:", error);
-        toast.error("Failed to load tasks", "Please refresh the page");
+      .catch(() => {
+        console.error("Error fetching tasks:", "Please refresh the page");
       })
       .finally(() => setLoading(false));
   }, [toast]);
@@ -109,7 +108,7 @@ export function TaskKanban() {
       await updateTask(draggingTask.id, { status: columnId as "not_started" | "in_progress" | "blocked" | "completed" });
       const column = columns.find((c) => c.id === columnId);
       toast.success("Task moved", `→ ${column?.title}`);
-    } catch (error) {
+    } catch {
       // Rollback
       setTasks((prev) =>
         prev.map((t) =>
@@ -281,8 +280,8 @@ function TaskCard({ task, isDragging, onDragStart, onDragEnd }: TaskCardProps) {
                 isOverdue
                   ? "text-[#F87171]"
                   : isDueToday
-                  ? "text-[#FBBF24]"
-                  : "text-[#6B6B6B]"
+                    ? "text-[#FBBF24]"
+                    : "text-[#6B6B6B]"
               )}
             >
               {isOverdue && <AlertTriangle className="h-3 w-3" />}

@@ -116,6 +116,11 @@ export function InlineSelectEdit({
 
   const currentOption = options.find((o) => o.value === value);
 
+  const handleSelect = React.useCallback((optionValue: string) => {
+    onSave(optionValue);
+    setIsOpen(false);
+  }, [onSave]);
+
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -149,12 +154,7 @@ export function InlineSelectEdit({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onCancel, onSave, onTab, value, highlightedIndex, options]);
-
-  const handleSelect = (optionValue: string) => {
-    onSave(optionValue);
-    setIsOpen(false);
-  };
+  }, [onCancel, onSave, onTab, value, highlightedIndex, options, handleSelect]);
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
@@ -193,8 +193,8 @@ export function InlineSelectEdit({
                 index === highlightedIndex
                   ? "bg-[#3E3E3E]"
                   : option.value === value
-                  ? "bg-[#323232]"
-                  : "hover:bg-[#323232]"
+                    ? "bg-[#323232]"
+                    : "hover:bg-[#323232]"
               )}
             >
               <span

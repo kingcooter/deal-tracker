@@ -18,10 +18,8 @@ import {
   Flag,
   User,
 } from "lucide-react";
-import { cn, formatDate, formatRelativeDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { cn, formatRelativeDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { useToastActions } from "@/components/ui/toast";
 
@@ -92,7 +90,6 @@ interface EditingCell {
 
 export function TasksTable({
   tasks,
-  workflowId,
   onTaskUpdate,
   onTaskAdd,
   onTaskDelete,
@@ -142,10 +139,6 @@ export function TasksTable({
       return 0;
     });
   }, [tasks, sortKey, sortDirection]);
-
-  const handleStatusChange = (taskId: string, status: Task["status"]) => {
-    onTaskUpdate?.(taskId, { status });
-  };
 
   const handleAddTask = () => {
     if (!newTaskName.trim()) return;

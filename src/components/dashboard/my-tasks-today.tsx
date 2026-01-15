@@ -6,7 +6,7 @@ import { Check, Clock, AlertTriangle, ChevronRight, Building2 } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { getAllTasks, updateTask } from "@/lib/supabase/queries";
 import { useToastActions } from "@/components/ui/toast";
-import { isToday, isPast, parseISO, format } from "date-fns";
+import { isToday, isPast, parseISO } from "date-fns";
 
 interface TaskWithDeal {
   id: string;
@@ -46,8 +46,8 @@ export function MyTasksToday() {
           return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
         });
         setTasks(todayTasks.slice(0, 5));
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
+      } catch {
+        // Silently fail - tasks will just show empty
       } finally {
         setLoading(false);
       }
@@ -62,7 +62,7 @@ export function MyTasksToday() {
     try {
       await updateTask(task.id, { status: "completed" });
       toast.success("Task completed", task.task);
-    } catch (error) {
+    } catch {
       // Rollback
       setTasks((prev) => [...prev, task]);
       toast.error("Failed to complete task", "Please try again");

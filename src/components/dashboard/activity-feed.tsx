@@ -3,12 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  Building2,
   CheckSquare,
   Users,
   Plus,
   Edit2,
-  Trash2,
   Check,
   Clock,
 } from "lucide-react";

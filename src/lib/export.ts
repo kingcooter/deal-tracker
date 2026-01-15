@@ -4,9 +4,9 @@
 
 type ExportableValue = string | number | boolean | null | undefined | Date;
 
-interface ExportOptions {
-  filename: string;
+export interface ExportOptions {
   format: 'csv' | 'json';
+  filename?: string;
 }
 
 /**

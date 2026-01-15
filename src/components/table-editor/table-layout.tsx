@@ -1,16 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Building2,
   CheckSquare,
   Users,
   Plus,
   MoreHorizontal,
-  ChevronRight,
-  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Breadcrumb, type BreadcrumbItem } from "@/components/ui/breadcrumb";
@@ -237,12 +233,11 @@ export function Pagination({
   );
 }
 
-// Export TabBar as a simpler component without tab functionality
+// TabBar component for navigation
 interface TabBarProps {
-  activeTable: string;
-  icon: React.ReactNode;
+  className?: string;
 }
 
-export function TabBar({ activeTable, icon }: TabBarProps) {
+export function TabBar({ }: TabBarProps) {
   return null; // TabBar is no longer needed - breadcrumbs replace this
 }

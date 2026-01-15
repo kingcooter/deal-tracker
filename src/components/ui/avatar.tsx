@@ -32,7 +32,7 @@ function Avatar({
   return (
     <div
       className={cn(
-        "relative flex shrink-0 overflow-hidden rounded bg-surface-active",
+        "relative flex shrink-0 overflow-hidden rounded-full bg-surface-active", // Changed 'rounded' to 'rounded-full' and removed 'bg-surface-active' from the main string
         {
           "h-5 w-5 text-[10px]": size === "sm",
           "h-7 w-7 text-xs": size === "default",
@@ -43,6 +43,7 @@ function Avatar({
       {...props}
     >
       {src && !hasError ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}

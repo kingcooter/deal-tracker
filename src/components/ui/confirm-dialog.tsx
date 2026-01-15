@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogBody,
   DialogTitle,
   DialogFooter,
@@ -126,11 +125,13 @@ export function useConfirm() {
   const handleConfirm = React.useCallback(() => {
     state.resolve?.(true);
     setState({ open: false, options: null, resolve: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.resolve]);
 
   const handleCancel = React.useCallback(() => {
     state.resolve?.(false);
     setState({ open: false, options: null, resolve: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.resolve]);
 
   const ConfirmDialogComponent = React.useCallback(() => {

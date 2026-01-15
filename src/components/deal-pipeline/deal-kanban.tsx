@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, MapPin, MoreHorizontal, Plus, GripVertical } from "lucide-react";
+import { Building2, MapPin, Plus, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDeals, updateDeal } from "@/lib/supabase/queries";
 import { useToastActions } from "@/components/ui/toast";
@@ -98,7 +98,7 @@ export function DealKanban({ onNewDeal }: DealKanbanProps) {
       await updateDeal(draggingDeal.id, { status: columnId as Deal["status"] });
       const column = columns.find((c) => c.id === columnId);
       toast.success("Deal moved", `${draggingDeal.name} → ${column?.title}`);
-    } catch (error) {
+    } catch {
       // Rollback
       setDeals((prev) =>
         prev.map((d) =>

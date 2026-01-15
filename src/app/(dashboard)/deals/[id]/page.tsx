@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import { useParams } from "next/navigation";
 import {
   Building2,
   MapPin,
@@ -15,7 +16,6 @@ import {
   Circle,
   AlertCircle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,7 +79,6 @@ const statusColors: Record<string, { badge: "success" | "warning" | "secondary";
 
 export default function DealDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const dealId = params.id as string;
   const toast = useToastActions();
 
@@ -373,10 +372,12 @@ export default function DealDetailPage() {
         {/* Property image */}
         <div className="relative h-40 w-64 shrink-0 rounded-lg bg-surface overflow-hidden border border-border">
           {deal.image_url ? (
-            <img
+            <Image
               src={deal.image_url}
               alt={deal.name}
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
+              unoptimized
             />
           ) : (
             <div className="flex h-full items-center justify-center">

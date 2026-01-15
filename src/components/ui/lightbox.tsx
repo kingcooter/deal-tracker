@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { X, ZoomIn, ZoomOut, RotateCw, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface LightboxProps {
   src: string;
@@ -103,7 +102,10 @@ export function Lightbox({ src, alt, open, onClose }: LightboxProps) {
       </div>
 
       {/* Image container */}
-      <div className="relative max-w-[90vw] max-h-[85vh] overflow-hidden">
+      <div
+        className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-lg shadow-2xl"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt}

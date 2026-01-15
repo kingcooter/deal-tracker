@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, Plus, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { X, Plus } from "lucide-react";
 
 export interface FilterOption {
   value: string;

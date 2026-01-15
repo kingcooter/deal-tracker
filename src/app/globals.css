@@ -7,213 +7,211 @@
  */
 
 :root {
-  /* ===== SUPABASE NEUTRAL SCALE ===== */
-  /* Exact Supabase colors for sharp, professional look */
-  --neutral-950: #1C1C1C;   /* Primary background */
-  --neutral-900: #1C1C1C;   /* Primary background (alias) */
-  --neutral-850: #232323;   /* Slightly elevated */
-  --neutral-800: #2A2A2A;   /* Panels, cards, secondary bg */
-  --neutral-750: #2E2E2E;   /* Surface hover */
-  --neutral-700: #323232;   /* Tertiary bg, hover states */
-  --neutral-600: #3E3E3E;   /* Borders, dividers */
-  --neutral-500: #4E4E4E;   /* Hover borders */
-  --neutral-400: #6B6B6B;   /* Tertiary text, icons */
-  --neutral-300: #A1A1A1;   /* Secondary text */
-  --neutral-200: #CCCCCC;   /* Secondary text light */
-  --neutral-100: #EDEDED;   /* Primary text */
-  --neutral-50: #FFFFFF;    /* Brightest text */
+  /* ===== VERCEL / GEIST THEME ===== */
+  /* The Void: Deep, pure blacks and cool grays */
+  --neutral-950: #0A0A0A;   /* Primary background (Deep Black) */
+  --neutral-900: #111111;   /* Surface/Cards (Subtle lift) */
+  --neutral-850: #161616;   /* Hover states */
+  --neutral-800: #1F1F1F;   /* elevated surfaces */
+  --neutral-750: #262626;   /* Borders/Dividers */
+  --neutral-700: #333333;   /* Stronger borders */
+  --neutral-600: #444444;   /* Icons, subtler text */
+  --neutral-500: #666666;   /* Secondary text */
+  --neutral-400: #888888;   /* Muted text */
+  --neutral-300: #999999;   /* Text hints */
+  --neutral-200: #BBBBBB;   /* Bright text */
+  --neutral-100: #EDEDED;   /* Primary Heading Text */
+  --neutral-50: #FFFFFF;    /* Pure White */
 
   /* Semantic background aliases */
   --background: var(--neutral-950);
-  --background-secondary: var(--neutral-800);
-  --surface: var(--neutral-800);
-  --surface-hover: var(--neutral-700);
-  --surface-active: var(--neutral-600);
-  --surface-elevated: var(--neutral-800);
+  --background-secondary: #000000; /* Sidebar can be pure black or slightly tinted */
+  --surface: var(--neutral-900);
+  --surface-hover: var(--neutral-850);
+  --surface-active: var(--neutral-800);
+  --surface-elevated: var(--neutral-900);
 
   /* Semantic border aliases */
-  --border: var(--neutral-600);
-  --border-subtle: var(--neutral-700);
-  --border-strong: var(--neutral-500);
+  --border: var(--neutral-700);        /* Structural borders */
+  --border-subtle: var(--neutral-750); /* Dividers */
+  --border-strong: var(--neutral-600); /* Inputs/Active */
 
   /* Semantic text aliases */
   --foreground: var(--neutral-100);
-  --foreground-secondary: var(--neutral-300);
-  --foreground-muted: var(--neutral-300);
-  --foreground-subtle: var(--neutral-400);
+  --foreground-secondary: var(--neutral-400); /* The Vercel "Cool Gray" text */
+  --foreground-muted: var(--neutral-500);
+  --foreground-subtle: var(--neutral-600);
 
-  /* ===== PRIMARY ACTION COLOR (Supabase Green) ===== */
+  /* ===== PRIMARY ACTION COLOR (Signal) ===== */
+  /* Keeping Supabase Green for brand identity, but using it sparingly like Vercel's Blue */
   --primary: #3ECF8E;
   --primary-hover: #4AE39A;
-  --primary-muted: rgba(62, 207, 142, 0.15);
-  --primary-glow: rgba(62, 207, 142, 0.25);
+  --primary-muted: rgba(62, 207, 142, 0.1);
+  --primary-glow: rgba(62, 207, 142, 0.4); /* Stronger glow for "Signal" effect */
 
-  /* ===== SEMANTIC COLORS ===== */
-  --destructive: #F87171;
-  --destructive-muted: rgba(248, 113, 113, 0.15);
-  --warning: #FBBF24;
-  --warning-muted: rgba(251, 191, 36, 0.15);
-  --info: #60A5FA;
-  --info-muted: rgba(96, 165, 250, 0.15);
+  /* ===== SEMANTIC SIGNALS (High Contrast) ===== */
+  --destructive: #FF0000;   /* Vercel Red */
+  --destructive-muted: rgba(255, 0, 0, 0.1);
+  --warning: #F5A623;       /* Vercel Amber */
+  --warning-muted: rgba(245, 166, 35, 0.1);
+  --info: #0070F3;          /* Vercel Blue */
+  --info-muted: rgba(0, 112, 243, 0.1);
 
-  /* ===== DEAL STATUS COLORS (PM Vocabulary) ===== */
-  /* Lead/New - Blue */
-  --status-lead: #60A5FA;
-  --status-lead-muted: rgba(96, 165, 250, 0.15);
-  /* Qualified - Purple */
-  --status-qualified: #A78BFA;
-  --status-qualified-muted: rgba(167, 139, 250, 0.15);
-  /* Under Contract - Amber */
-  --status-under-contract: #FBBF24;
-  --status-under-contract-muted: rgba(251, 191, 36, 0.15);
-  /* Due Diligence - Orange */
-  --status-due-diligence: #FB923C;
-  --status-due-diligence-muted: rgba(251, 146, 60, 0.15);
-  /* Closed Won - Green */
-  --status-closed-won: #3ECF8E;
-  --status-closed-won-muted: rgba(62, 207, 142, 0.2);
-  /* Closed Lost - Red */
-  --status-closed-lost: #F87171;
-  --status-closed-lost-muted: rgba(248, 113, 113, 0.15);
+  /* ===== DEAL STATUS COLORS (Signals) ===== */
+  /* Using specific hex codes to pop against #000 */
+  --status-lead: #0070F3;         /* Blue */
+  --status-lead-muted: rgba(0, 112, 243, 0.15);
+  
+  --status-qualified: #7928CA;    /* Purple */
+  --status-qualified-muted: rgba(121, 40, 202, 0.15);
+  
+  --status-under-contract: #F5A623; /* Amber */
+  --status-under-contract-muted: rgba(245, 166, 35, 0.15);
+  
+  --status-due-diligence: #FF4D4D; /* Red-Orange / High Alert */
+  --status-due-diligence-muted: rgba(255, 77, 77, 0.15);
+  
+  --status-closed-won: #3ECF8E;   /* Green */
+  --status-closed-won-muted: rgba(62, 207, 142, 0.15);
+  
+  --status-closed-lost: #888888;  /* Grayed out */
+  --status-closed-lost-muted: rgba(136, 136, 136, 0.15);
+
   /* Legacy status mapping */
   --status-active: #3ECF8E;
   --status-active-muted: rgba(62, 207, 142, 0.15);
-  --status-closed: #64748b;
-  --status-closed-muted: rgba(100, 116, 139, 0.15);
-  --status-on-hold: #FBBF24;
-  --status-on-hold-muted: rgba(251, 191, 36, 0.15);
+  --status-closed: #333333;
+  --status-closed-muted: rgba(51, 51, 51, 0.15);
+  --status-on-hold: #F5A623;
+  --status-on-hold-muted: rgba(245, 166, 35, 0.15);
 
   /* ===== TASK STATUS COLORS ===== */
-  --task-todo: var(--neutral-400);
-  --task-todo-muted: rgba(107, 107, 107, 0.15);
-  --task-in-progress: #60A5FA;
-  --task-in-progress-muted: rgba(96, 165, 250, 0.15);
-  --task-blocked: #F87171;
-  --task-blocked-muted: rgba(248, 113, 113, 0.15);
+  --task-todo: var(--neutral-500);
+  --task-todo-muted: rgba(102, 102, 102, 0.1);
+  --task-in-progress: #0070F3;
+  --task-in-progress-muted: rgba(0, 112, 243, 0.1);
+  --task-blocked: #FF0000;
+  --task-blocked-muted: rgba(255, 0, 0, 0.1);
   --task-done: #3ECF8E;
-  --task-done-muted: rgba(62, 207, 142, 0.15);
+  --task-done-muted: rgba(62, 207, 142, 0.1);
 
   /* ===== PRIORITY COLORS ===== */
-  --priority-urgent: #F87171;
-  --priority-high: #F87171;
-  --priority-medium: #FBBF24;
-  --priority-low: #3ECF8E;
-  --priority-none: var(--neutral-400);
+  --priority-urgent: #FF0000;
+  --priority-high: #F5A623;
+  --priority-medium: #0070F3;
+  --priority-low: var(--neutral-500);
+  --priority-none: var(--neutral-600);
 
-  /* ===== ENTITY COLORS ===== */
-  /* Distinct hues for different data types */
-  --entity-deal: #60A5FA;        /* Blue - deals/properties */
-  --entity-deal-muted: rgba(96, 165, 250, 0.15);
-  --entity-contact: #A78BFA;     /* Purple - contacts/people */
-  --entity-contact-muted: rgba(167, 139, 250, 0.15);
-  --entity-workflow: #FB923C;    /* Orange - workflows */
-  --entity-workflow-muted: rgba(251, 146, 60, 0.15);
-  --entity-task: #60A5FA;        /* Blue - tasks */
-  --entity-task-muted: rgba(96, 165, 250, 0.15);
+  /* ===== ENTITY COLORS (Signals) ===== */
+  --entity-deal: #0070F3;       
+  --entity-deal-muted: rgba(0, 112, 243, 0.1);
+  --entity-contact: #7928CA;     
+  --entity-contact-muted: rgba(121, 40, 202, 0.1);
+  --entity-workflow: #F5A623;    
+  --entity-workflow-muted: rgba(245, 166, 35, 0.1);
+  --entity-task: #3ECF8E;      
+  --entity-task-muted: rgba(62, 207, 142, 0.1);
 
   /* ===== PROPERTY TYPE COLORS ===== */
-  --property-residential: #60A5FA;   /* Blue */
-  --property-residential-muted: rgba(96, 165, 250, 0.15);
-  --property-commercial: #A78BFA;    /* Purple */
-  --property-commercial-muted: rgba(167, 139, 250, 0.15);
-  --property-office: #60A5FA;        /* Blue */
-  --property-office-muted: rgba(96, 165, 250, 0.15);
-  --property-retail: #FB923C;        /* Orange */
-  --property-retail-muted: rgba(251, 146, 60, 0.15);
-  --property-industrial: #FBBF24;    /* Amber */
-  --property-industrial-muted: rgba(251, 191, 36, 0.15);
-  --property-multifamily: #3ECF8E;   /* Green */
+  --property-residential: #0070F3;
+  --property-residential-muted: rgba(0, 112, 243, 0.15);
+  --property-commercial: #7928CA;
+  --property-commercial-muted: rgba(121, 40, 202, 0.15);
+  --property-office: #0070F3;
+  --property-office-muted: rgba(0, 112, 243, 0.15);
+  --property-retail: #F5A623;
+  --property-retail-muted: rgba(245, 166, 35, 0.15);
+  --property-industrial: #F5A623;
+  --property-industrial-muted: rgba(245, 166, 35, 0.15);
+  --property-multifamily: #3ECF8E;
   --property-multifamily-muted: rgba(62, 207, 142, 0.15);
-  --property-land: #A1A1A1;          /* Gray */
-  --property-land-muted: rgba(161, 161, 161, 0.15);
-  --property-mixed-use: #A78BFA;     /* Purple */
-  --property-mixed-use-muted: rgba(167, 139, 250, 0.15);
+  --property-land: #888888;
+  --property-land-muted: rgba(136, 136, 136, 0.15);
+  --property-mixed-use: #7928CA;
+  --property-mixed-use-muted: rgba(121, 40, 202, 0.15);
 
   /* ===== SEMANTIC STATUS COLORS ===== */
   --success: #3ECF8E;
   --success-muted: rgba(62, 207, 142, 0.15);
-  --error: #F87171;
-  --error-muted: rgba(248, 113, 113, 0.15);
+  --error: #FF0000;
+  --error-muted: rgba(255, 0, 0, 0.15);
 
   /* ===== WORKFLOW TYPE COLORS ===== */
-  --workflow-finance: #60A5FA;       /* Blue */
-  --workflow-finance-muted: rgba(96, 165, 250, 0.15);
-  --workflow-legal: #A78BFA;         /* Purple */
-  --workflow-legal-muted: rgba(167, 139, 250, 0.15);
-  --workflow-due-diligence: #FB923C; /* Orange */
-  --workflow-due-diligence-muted: rgba(251, 146, 60, 0.15);
-  --workflow-construction: #FBBF24;  /* Amber */
-  --workflow-construction-muted: rgba(251, 191, 36, 0.15);
-  --workflow-zoning: #F87171;        /* Red */
-  --workflow-zoning-muted: rgba(248, 113, 113, 0.15);
-  --workflow-regulatory: #3ECF8E;    /* Green */
+  --workflow-finance: #0070F3;
+  --workflow-finance-muted: rgba(0, 112, 243, 0.15);
+  --workflow-legal: #7928CA;
+  --workflow-legal-muted: rgba(121, 40, 202, 0.15);
+  --workflow-due-diligence: #F5A623;
+  --workflow-due-diligence-muted: rgba(245, 166, 35, 0.15);
+  --workflow-construction: #F5A623;
+  --workflow-construction-muted: rgba(245, 166, 35, 0.15);
+  --workflow-zoning: #FF0000;
+  --workflow-zoning-muted: rgba(255, 0, 0, 0.15);
+  --workflow-regulatory: #3ECF8E;
   --workflow-regulatory-muted: rgba(62, 207, 142, 0.15);
 
-  /* ===== SHADOWS ===== */
-  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.5);
-  --shadow-sm: 0 2px 4px rgb(0 0 0 / 0.4), 0 1px 2px rgb(0 0 0 / 0.3);
-  --shadow: 0 4px 12px rgb(0 0 0 / 0.4), 0 2px 4px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.5), 0 4px 8px rgb(0 0 0 / 0.3);
-  --shadow-xl: 0 16px 48px rgb(0 0 0 / 0.6), 0 8px 16px rgb(0 0 0 / 0.4);
-  --shadow-glow: 0 0 20px var(--primary-glow);
-  --shadow-glow-sm: 0 0 10px var(--primary-glow);
+  /* ===== SHADOWS (Subtle & Tight) ===== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.8);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.6);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.8);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 30px var(--primary-glow);
+  --shadow-glow-sm: 0 0 15px var(--primary-glow);
 
-  /* ===== TRANSITIONS ===== */
-  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* ===== TRANSITIONS (Snap) ===== */
+  --transition-fast: 100ms ease-out;
+  --transition-base: 150ms ease-out;
+  --transition-smooth: 200ms cubic-bezier(0.16, 1, 0.3, 1); /* Vercel 'ease' */
+  --transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ===== RADIUS ===== */
   --radius-sm: 4px;
   --radius: 6px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
-  /* ===== TYPOGRAPHY (Supabase Specs) ===== */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* ===== TYPOGRAPHY ===== */
+  --font-family: 'Geist Sans', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   --font-size-tiny: 11px;
   --font-size-small: 13px;
   --font-size-body: 14px;
-  --font-size-subhead: 16px;
+  --font-size-subhead: 15px;
   --font-size-title: 20px;
-  --font-size-heading: 24px;
+  --font-size-heading: 32px;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
-  --letter-spacing-heading: -0.01em;
-  --letter-spacing-body: 0;
-  --line-height-body: 1.5;
-  --line-height-heading: 1.3;
+  --letter-spacing-heading: -0.02em; /* Tight tracking for headings */
+  --letter-spacing-body: -0.01em;     /* Slight tightening for body */
+  --line-height-body: 1.6;
+  --line-height-heading: 1.2;
 
   /* ===== ICON SIZES ===== */
   --icon-xs: 12px;
   --icon-sm: 14px;
   --icon-md: 16px;
-  --icon-lg: 18px;
-  --icon-xl: 20px;
-  --icon-2xl: 24px;
+  --icon-lg: 20px;
+  --icon-xl: 24px;
+  --icon-2xl: 32px;
 
   /* ===== SPACING SCALE ===== */
   --space-px: 1px;
   --space-0: 0;
-  --space-0-5: 0.125rem;  /* 2px */
-  --space-1: 0.25rem;     /* 4px */
-  --space-1-5: 0.375rem;  /* 6px */
-  --space-2: 0.5rem;      /* 8px */
-  --space-2-5: 0.625rem;  /* 10px */
-  --space-3: 0.75rem;     /* 12px */
-  --space-4: 1rem;        /* 16px */
-  --space-5: 1.25rem;     /* 20px */
-  --space-6: 1.5rem;      /* 24px */
-  --space-8: 2rem;        /* 32px */
-  --space-10: 2.5rem;     /* 40px */
-  --space-12: 3rem;       /* 48px */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
   /* ===== SIDEBAR ===== */
   --sidebar-width: 240px;
-  --sidebar-width-collapsed: 64px;
+  --sidebar-width-collapsed: 50px; /* Tighter collapse */
 }
 
 /* ===== TAILWIND THEME MAPPING ===== */

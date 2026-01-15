@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Building2,
-  Users,
   CheckSquare,
   DollarSign,
   Calendar,
@@ -31,7 +30,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [timeRange, setTimeRange] = React.useState("Last 7 days");
+  const [timeRange, _setTimeRange] = React.useState("Last 7 days");
   const { isOpen: quickAddTaskOpen, setIsOpen: setQuickAddTaskOpen } = useQuickAddTask();
   const { setOpen: setCommandPaletteOpen } = useCommandPalette();
 

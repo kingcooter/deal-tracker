@@ -116,7 +116,7 @@ export function SavedFiltersDropdown({
                         </span>
                         <span className="text-xs text-foreground-muted block truncate">
                           {Object.entries(filter.filters)
-                            .filter(([_, v]) => v !== "all" && v !== "")
+                            .filter(([, v]) => v !== "all" && v !== "")
                             .map(([k, v]) => `${k}: ${v}`)
                             .join(", ") || "No active filters"}
                         </span>
@@ -180,7 +180,7 @@ export function SavedFiltersDropdown({
               <span className="font-medium">Current filters:</span>
               <div className="mt-1 space-y-1">
                 {Object.entries(currentFilters)
-                  .filter(([_, v]) => v !== "all" && v !== "")
+                  .filter(([, v]) => v !== "all" && v !== "")
                   .map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2">
                       <Check className="h-3 w-3 flex-shrink-0 text-success" />
@@ -188,7 +188,7 @@ export function SavedFiltersDropdown({
                       <span className="text-foreground truncate">{value}</span>
                     </div>
                   ))}
-                {Object.entries(currentFilters).filter(([_, v]) => v !== "all" && v !== "").length === 0 && (
+                {Object.entries(currentFilters).filter(([, v]) => v !== "all" && v !== "").length === 0 && (
                   <span className="text-foreground-subtle">No filters applied</span>
                 )}
               </div>

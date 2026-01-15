@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Users, Mail, Phone, Building } from "lucide-react";
+import { Mail, Phone, Building } from "lucide-react";
 import {
   TableLayout,
   Toolbar,
@@ -106,7 +106,7 @@ export default function ContactsPage() {
       }
     }
     fetchContacts();
-  }, []);
+  }, [toast]);
 
   // Pagination
   const totalPages = Math.ceil(contacts.length / rowsPerPage);

@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { getDeals, getContacts } from "@/lib/supabase/queries";
-import { fuzzySearch, highlightMatches, type FuzzyMatch } from "@/lib/fuzzy-search";
+import { fuzzySearch, highlightMatches } from "@/lib/fuzzy-search";
 import type { Deal, Contact } from "@/lib/supabase/types";
 
 interface CommandPaletteProps {
@@ -144,47 +144,47 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     }
   }, [open, onOpenChange]);
 
-  // Quick actions
-  const actions: SearchResult[] = [
-    {
-      id: "new-deal",
-      type: "action",
-      title: "Create new deal",
-      icon: <Plus className="h-4 w-4" />,
-      href: "/deals?new=true",
-    },
-    {
-      id: "new-contact",
-      type: "action",
-      title: "Add new contact",
-      icon: <Plus className="h-4 w-4" />,
-      href: "/contacts?new=true",
-    },
-    {
-      id: "go-deals",
-      type: "action",
-      title: "Go to Deals",
-      icon: <Building2 className="h-4 w-4" />,
-      href: "/deals",
-    },
-    {
-      id: "go-contacts",
-      type: "action",
-      title: "Go to Contacts",
-      icon: <Users className="h-4 w-4" />,
-      href: "/contacts",
-    },
-    {
-      id: "go-settings",
-      type: "action",
-      title: "Go to Settings",
-      icon: <Settings className="h-4 w-4" />,
-      href: "/settings",
-    },
-  ];
-
   // Build search results with fuzzy search
   const results = React.useMemo(() => {
+    // Quick actions - defined inside useMemo to avoid dependency recreation
+    const actions: SearchResult[] = [
+      {
+        id: "new-deal",
+        type: "action",
+        title: "Create new deal",
+        icon: <Plus className="h-4 w-4" />,
+        href: "/deals?new=true",
+      },
+      {
+        id: "new-contact",
+        type: "action",
+        title: "Add new contact",
+        icon: <Plus className="h-4 w-4" />,
+        href: "/contacts?new=true",
+      },
+      {
+        id: "go-deals",
+        type: "action",
+        title: "Go to Deals",
+        icon: <Building2 className="h-4 w-4" />,
+        href: "/deals",
+      },
+      {
+        id: "go-contacts",
+        type: "action",
+        title: "Go to Contacts",
+        icon: <Users className="h-4 w-4" />,
+        href: "/contacts",
+      },
+      {
+        id: "go-settings",
+        type: "action",
+        title: "Go to Settings",
+        icon: <Settings className="h-4 w-4" />,
+        href: "/settings",
+      },
+    ];
+
     const q = query.trim();
 
     if (!q) {
@@ -256,7 +256,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
     // Sort all results by score
     return items.sort((a, b) => (b.score || 0) - (a.score || 0));
-  }, [query, deals, contacts, actions, recentSearches]);
+  }, [query, deals, contacts, recentSearches]);
 
   // Reset selected index when results change
   React.useEffect(() => {

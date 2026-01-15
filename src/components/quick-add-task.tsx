@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { X, Building2, Calendar, Flag, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { getDeals, getDealWorkflows, createTask } from "@/lib/supabase/queries";
 import { useToastActions } from "@/components/ui/toast";
 

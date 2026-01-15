@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckSquare, Building2, Check, LayoutList, Layers, ChevronDown, ChevronRight, Kanban } from "lucide-react";
+import { Building2, Check, LayoutList, Layers, ChevronDown, ChevronRight, Kanban } from "lucide-react";
 import {
   TableLayout,
   Toolbar,
@@ -103,15 +103,14 @@ export default function TasksPage() {
       try {
         const data = await getAllTasks();
         setTasks(data as TaskWithDeal[]);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
+      } catch {
         toast.error("Failed to load tasks", "Please refresh the page");
       } finally {
         setLoading(false);
       }
     }
     fetchTasks();
-  }, []);
+  }, [toast]);
 
   // Handle task completion toggle
   const handleToggleComplete = async (e: React.MouseEvent, task: TaskWithDeal) => {
@@ -129,7 +128,7 @@ export default function TasksPage() {
         newStatus === "completed" ? "Task completed" : "Task reopened",
         task.task
       );
-    } catch (error) {
+    } catch {
       // Rollback on error
       setTasks((prev) =>
         prev.map((t) => (t.id === task.id ? { ...t, status: task.status } : t))
@@ -162,7 +161,7 @@ export default function TasksPage() {
     try {
       await updateTask(taskId, { [dbField]: value });
       toast.success("Updated", `Task ${field.replace("_", " ")} updated`);
-    } catch (error) {
+    } catch {
       // Rollback on error
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? task : t))
@@ -187,7 +186,6 @@ export default function TasksPage() {
 
     tasks.forEach((task) => {
       const dealId = task.workflow?.deal?.id || "unassigned";
-      const dealName = task.workflow?.deal?.name || "Unassigned";
 
       if (!groups.has(dealId)) {
         groups.set(dealId, {

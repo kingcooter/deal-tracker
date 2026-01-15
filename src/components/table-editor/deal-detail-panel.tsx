@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, AlertTriangle, Circle, Building2, Mail, Phone } from "lucide-react";
+import { Check, AlertTriangle, Circle, Mail, Phone } from "lucide-react";
 import { SlideOver, SlideOverField, SlideOverSection, SlideOverDivider } from "./slide-over";
 import { InlineSelectEdit } from "./inline-edit";
 import { StatusBadge } from "./data-table";
@@ -86,24 +86,26 @@ export function DealDetailPanel({ deal, open, onClose, onDealUpdate }: DealDetai
       setLoadingTasks(true);
       setLoadingContacts(true);
 
-      try {
-        const [tasksData, contactsData] = await Promise.all([
-          getTasksForDeal(dealId),
-          getDealContacts(dealId),
-        ]);
-
-        setTasks(tasksData as Task[]);
-        setContacts(contactsData as DealContact[]);
-      } catch (error) {
-        console.error("Error fetching deal data:", error);
-      } finally {
-        setLoadingTasks(false);
-        setLoadingContacts(false);
-      }
+      Promise.all([
+        getTasksForDeal(dealId),
+        getDealContacts(dealId),
+      ])
+        .then(([tasksData, contactsData]) => {
+          setTasks(tasksData as Task[]);
+          setContacts(contactsData as DealContact[]);
+        })
+        .catch(() => {
+          toast.error("Failed to load activities");
+        })
+        .finally(() => {
+          setLoadingTasks(false);
+          setLoadingContacts(false);
+        });
     }
 
     fetchData();
-  }, [deal?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only re-fetch when deal.id changes, not entire deal object
+  }, [deal?.id, toast]);
 
   // Handle field update
   const handleFieldUpdate = async (field: string, value: string) => {
@@ -119,7 +121,7 @@ export function DealDetailPanel({ deal, open, onClose, onDealUpdate }: DealDetai
     try {
       await updateDeal(deal.id, { [field]: value });
       toast.success("Updated", `${field.replace("_", " ")} updated`);
-    } catch (error) {
+    } catch {
       // Rollback
       onDealUpdate({ ...deal, [field]: previousValue });
       toast.error("Failed to update", "Please try again");
@@ -137,7 +139,7 @@ export function DealDetailPanel({ deal, open, onClose, onDealUpdate }: DealDetai
 
     try {
       await updateTask(task.id, { status: newStatus });
-    } catch (error) {
+    } catch {
       // Rollback
       setTasks((prev) =>
         prev.map((t) => (t.id === task.id ? { ...t, status: task.status } : t))
@@ -235,22 +237,20 @@ export function DealDetailPanel({ deal, open, onClose, onDealUpdate }: DealDetai
                   >
                     <button
                       onClick={() => handleToggleTask(task)}
-                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${
-                        isCompleted
-                          ? "bg-[#3ECF8E] border-[#3ECF8E]"
-                          : isBlocked
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isCompleted
+                        ? "bg-[#3ECF8E] border-[#3ECF8E]"
+                        : isBlocked
                           ? "border-[#F87171]"
                           : "border-[#3E3E3E] hover:border-[#4E4E4E]"
-                      }`}
+                        }`}
                     >
                       {isCompleted && <Check className="h-2.5 w-2.5 text-[#1C1C1C]" />}
                       {isBlocked && <AlertTriangle className="h-2.5 w-2.5 text-[#F87171]" />}
                       {isInProgress && <Circle className="h-2 w-2 text-[#60A5FA] fill-[#60A5FA]" />}
                     </button>
                     <span
-                      className={`text-[13px] truncate ${
-                        isCompleted ? "text-[#6B6B6B] line-through" : "text-[#EDEDED]"
-                      }`}
+                      className={`text-[13px] truncate ${isCompleted ? "text-[#6B6B6B] line-through" : "text-[#EDEDED]"
+                        }`}
                     >
                       {task.task}
                     </span>
@@ -337,9 +337,9 @@ export function DealDetailPanel({ deal, open, onClose, onDealUpdate }: DealDetai
               <span className="text-[12px] text-[#6B6B6B] w-16 flex-shrink-0">
                 {deal.created_at
                   ? new Date(deal.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
+                    month: "short",
+                    day: "numeric",
+                  })
                   : "—"}
               </span>
               <span className="text-[13px] text-[#A1A1A1]">Deal created</span>
